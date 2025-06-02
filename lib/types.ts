@@ -21,7 +21,7 @@ export interface Country {
   _id?: string
   name: string
   code: string
-  visa: VisaDetails
+  visa?: VisaDetails
   image: string
   description: string
   createdAt?: Date

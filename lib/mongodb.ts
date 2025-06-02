@@ -6,7 +6,8 @@ let clientPromise: Promise<MongoClient> | null = null
 // Check if MongoDB URI is available
 const uri = process.env.MONGODB_URI
 
-if (uri) {
+if (uri && typeof window === "undefined") {
+  // Only on server side
   const options = {}
 
   if (process.env.NODE_ENV === "development") {
@@ -18,13 +19,19 @@ if (uri) {
 
     if (!globalWithMongo._mongoClientPromise) {
       client = new MongoClient(uri, options)
-      globalWithMongo._mongoClientPromise = client.connect()
+      globalWithMongo._mongoClientPromise = client.connect().catch((err) => {
+        console.error("MongoDB connection failed:", err)
+        throw err
+      })
     }
     clientPromise = globalWithMongo._mongoClientPromise
   } else {
     // In production mode, it's best to not use a global variable.
     client = new MongoClient(uri, options)
-    clientPromise = client.connect()
+    clientPromise = client.connect().catch((err) => {
+      console.error("MongoDB connection failed:", err)
+      throw err
+    })
   }
 }
 

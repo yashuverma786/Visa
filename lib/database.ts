@@ -1,6 +1,7 @@
 import clientPromise from "./mongodb"
 import type { Country, VisaApplication, Testimonial, LeadCapture } from "./types"
 import { sampleCountries } from "./seed-data"
+import type { MongoClient } from "mongodb"
 
 const DB_NAME = "visa_immigration"
 
@@ -16,9 +17,17 @@ export async function getDatabase() {
 export async function isDatabaseAvailable(): Promise<boolean> {
   try {
     if (!clientPromise) return false
-    await getDatabase()
+    if (typeof window !== "undefined") return false // Client side
+
+    const client = (await Promise.race([
+      clientPromise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000)),
+    ])) as MongoClient
+
+    await client.db(DB_NAME).admin().ping()
     return true
-  } catch {
+  } catch (error) {
+    console.log("Database not available:", error.message)
     return false
   }
 }
@@ -39,7 +48,7 @@ export async function getCountries(): Promise<Country[]> {
     const db = await getDatabase()
     const countries = await db.collection("countries").find({}).toArray()
 
-    if (countries.length === 0) {
+    if (!countries || countries.length === 0) {
       // Return sample data if no countries in database
       return sampleCountries.map((country, index) => ({
         ...country,
@@ -55,7 +64,7 @@ export async function getCountries(): Promise<Country[]> {
     }))
   } catch (error) {
     console.error("Error fetching countries:", error)
-    // Fallback to sample data
+    // Always return sample data as fallback
     return sampleCountries.map((country, index) => ({
       ...country,
       _id: `sample_${index}`,

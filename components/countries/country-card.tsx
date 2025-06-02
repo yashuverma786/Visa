@@ -10,7 +10,8 @@ interface CountryCardProps {
 }
 
 export default function CountryCard({ country }: CountryCardProps) {
-  const minPrice = Math.min(...country.visaTypes.map((visa) => visa.price))
+  // Safely get the visa price
+  const visaPrice = country.visa?.price || 0
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -24,7 +25,7 @@ export default function CountryCard({ country }: CountryCardProps) {
           />
           <div className="absolute top-2 right-2">
             <Badge variant="secondary" className="bg-white/90">
-              {country.visaTypes.length} visa{country.visaTypes.length !== 1 ? "s" : ""}
+              {country.visa?.type || "B1-B2"}
             </Badge>
           </div>
         </div>
@@ -35,7 +36,7 @@ export default function CountryCard({ country }: CountryCardProps) {
 
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-gray-500">Starting from</span>
-          <span className="text-lg font-bold text-green-600">₹{minPrice.toLocaleString()}</span>
+          <span className="text-lg font-bold text-green-600">₹{visaPrice.toLocaleString()}</span>
         </div>
 
         <Button asChild className="w-full">

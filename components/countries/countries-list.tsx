@@ -2,7 +2,19 @@ import { getCountries } from "@/lib/database"
 import CountryCard from "./country-card"
 
 export default async function CountriesList() {
-  const countries = await getCountries()
+  let countries = []
+
+  try {
+    countries = await getCountries()
+  } catch (error) {
+    console.error("Error fetching countries:", error)
+    countries = []
+  }
+
+  // Ensure countries is always an array
+  if (!Array.isArray(countries)) {
+    countries = []
+  }
 
   if (countries.length === 0) {
     return (
