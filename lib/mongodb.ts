@@ -12,9 +12,6 @@ if (uri && typeof window === "undefined") {
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
-    bufferMaxEntries: 0,
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
   }
 
   if (process.env.NODE_ENV === "development") {
