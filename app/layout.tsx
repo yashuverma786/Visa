@@ -5,6 +5,7 @@ import "./globals.css"
 import Header from "@/components/layout/header"
 import Footer from "@/components/layout/footer"
 import VisaPopup from "@/components/popup/visa-popup"
+import ErrorBoundary from "@/components/error-boundary"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -78,12 +79,14 @@ export default function RootLayout({
         <meta name="theme-color" content="#1e40af" />
       </head>
       <body className={inter.className}>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <VisaPopup />
-        </div>
+        <ErrorBoundary>
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <VisaPopup />
+          </div>
+        </ErrorBoundary>
       </body>
     </html>
   )

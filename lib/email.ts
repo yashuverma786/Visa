@@ -8,7 +8,7 @@ const isEmailConfigured = () => {
 export async function sendVisaApplicationEmail(application: VisaApplication) {
   if (!isEmailConfigured()) {
     console.log("Email not configured. Application would be sent:", {
-      to: "visa@journeymytrip.com",
+      to: "ravi@journeymytrip.com",
       subject: `New Visa Application - ${application.applicantName} (${application.country})`,
       application,
     })
@@ -39,7 +39,7 @@ export async function sendVisaApplicationEmail(application: VisaApplication) {
       - Email: ${application.email}
       - Phone: ${application.phone}
       - Country: ${application.country}
-      - Visa Type: ${application.visaType}
+      - Visa Category: ${application.visaCategory}
       
       Documents Submitted:
       ${documentsList}
@@ -51,14 +51,14 @@ export async function sendVisaApplicationEmail(application: VisaApplication) {
 
     const mailOptions = {
       from: process.env.SMTP_USER,
-      to: "visa@journeymytrip.com",
+      to: "ravi@journeymytrip.com",
       subject: `New Visa Application - ${application.applicantName} (${application.country})`,
       text: emailContent,
       html: emailContent.replace(/\n/g, "<br>"),
     }
 
     await transporter.sendMail(mailOptions)
-    console.log("Email sent successfully")
+    console.log("Email sent successfully to ravi@journeymytrip.com")
   } catch (error) {
     console.error("Error sending email:", error)
     // Don't throw error, just log it
@@ -68,7 +68,7 @@ export async function sendVisaApplicationEmail(application: VisaApplication) {
 export async function sendLeadNotificationEmail(lead: any) {
   if (!isEmailConfigured()) {
     console.log("Email not configured. Lead notification would be sent:", {
-      to: "visa@journeymytrip.com",
+      to: "ravi@journeymytrip.com",
       subject: `New Lead - ${lead.name}`,
       lead,
     })
@@ -95,22 +95,24 @@ export async function sendLeadNotificationEmail(lead: any) {
       - Name: ${lead.name}
       - Email: ${lead.email}
       - Phone: ${lead.phone}
-      - Visa Type: ${lead.visaType}
-      - Country: ${lead.country || "Not specified"}
+      - Visa Type: ${lead.visaType || "Not specified"}
+      - Country: ${lead.country || lead.placeToVisit || "Not specified"}
       - Message: ${lead.message || "No message"}
+      - Source: ${lead.source || "Website"}
       
       Lead captured at: ${new Date(lead.createdAt).toLocaleString()}
     `
 
     const mailOptions = {
       from: process.env.SMTP_USER,
-      to: "visa@journeymytrip.com",
+      to: "ravi@journeymytrip.com",
       subject: `New Lead - ${lead.name}`,
       text: emailContent,
       html: emailContent.replace(/\n/g, "<br>"),
     }
 
     await transporter.sendMail(mailOptions)
+    console.log("Lead notification sent successfully to ravi@journeymytrip.com")
   } catch (error) {
     console.error("Error sending lead notification email:", error)
     // Don't throw error, just log it
@@ -120,7 +122,7 @@ export async function sendLeadNotificationEmail(lead: any) {
 export async function sendPopupLeadEmail(lead: any) {
   if (!isEmailConfigured()) {
     console.log("Email not configured. Popup lead would be sent:", {
-      to: "visa@journeymytrip.com",
+      to: "ravi@journeymytrip.com",
       subject: `🎯 New Popup Lead - ${lead.name}`,
       lead,
     })
@@ -157,13 +159,14 @@ export async function sendPopupLeadEmail(lead: any) {
 
     const mailOptions = {
       from: process.env.SMTP_USER,
-      to: "visa@journeymytrip.com",
+      to: "ravi@journeymytrip.com",
       subject: `🎯 New Popup Lead - ${lead.name} (${lead.placeToVisit})`,
       text: emailContent,
       html: emailContent.replace(/\n/g, "<br>"),
     }
 
     await transporter.sendMail(mailOptions)
+    console.log("Popup lead notification sent successfully to ravi@journeymytrip.com")
   } catch (error) {
     console.error("Error sending popup lead notification email:", error)
   }

@@ -8,7 +8,14 @@ const uri = process.env.MONGODB_URI
 
 if (uri && typeof window === "undefined") {
   // Only on server side
-  const options = {}
+  const options = {
+    maxPoolSize: 10,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+    bufferMaxEntries: 0,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }
 
   if (process.env.NODE_ENV === "development") {
     // In development mode, use a global variable so that the value
@@ -33,6 +40,8 @@ if (uri && typeof window === "undefined") {
       throw err
     })
   }
+} else {
+  console.warn("MongoDB URI not found in environment variables")
 }
 
 export default clientPromise

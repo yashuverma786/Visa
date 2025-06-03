@@ -17,24 +17,30 @@ export interface UpdateTaskData extends CreateTaskData {
   id: string
 }
 
+export interface VisaCategory {
+  id: string
+  name: string
+  type: string // e.g., "Tourist", "Business", "Student", "Work", "Family"
+  price: number
+  processingTime: string
+  validity: string
+  entries: "Single" | "Multiple"
+  requiredDocuments: string[]
+  processSteps: string[]
+  additionalInfo?: string
+  eligibility: string[]
+  restrictions?: string[]
+}
+
 export interface Country {
   _id?: string
   name: string
   code: string
-  visa?: VisaDetails
   image: string
   description: string
+  visaCategories: VisaCategory[]
   createdAt?: Date
   updatedAt?: Date
-}
-
-export interface VisaDetails {
-  type: "B1-B2" // Only B1-B2 visa type
-  price: number
-  processingTime: string
-  requiredDocuments: string[]
-  processSteps: string[]
-  additionalInfo?: string
 }
 
 export interface VisaApplication {
@@ -43,6 +49,7 @@ export interface VisaApplication {
   email: string
   phone: string
   country: string
+  visaCategory: string
   documents: UploadedDocument[]
   status: "pending" | "processing" | "approved" | "rejected"
   submittedAt: Date

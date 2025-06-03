@@ -10,8 +10,12 @@ interface CountryCardProps {
 }
 
 export default function CountryCard({ country }: CountryCardProps) {
-  // Safely get the visa price
-  const visaPrice = country.visa?.price || 0
+  // Get the cheapest visa category for display
+  const cheapestCategory = country.visaCategories?.reduce((prev, current) =>
+    prev.price < current.price ? prev : current,
+  )
+
+  const startingPrice = cheapestCategory?.price || 0
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -25,7 +29,7 @@ export default function CountryCard({ country }: CountryCardProps) {
           />
           <div className="absolute top-2 right-2">
             <Badge variant="secondary" className="bg-white/90">
-              {country.visa?.type || "B1-B2"}
+              {country.visaCategories?.length || 0} Categories
             </Badge>
           </div>
         </div>
@@ -34,9 +38,27 @@ export default function CountryCard({ country }: CountryCardProps) {
         <h3 className="text-xl font-semibold text-gray-900 mb-2">{country.name}</h3>
         <p className="text-gray-600 text-sm mb-4 line-clamp-2">{country.description}</p>
 
+        {/* Show available visa types */}
+        {country.visaCategories && country.visaCategories.length > 0 && (
+          <div className="mb-4">
+            <div className="flex flex-wrap gap-1 mb-2">
+              {country.visaCategories.slice(0, 3).map((category, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {category.type}
+                </Badge>
+              ))}
+              {country.visaCategories.length > 3 && (
+                <Badge variant="outline" className="text-xs">
+                  +{country.visaCategories.length - 3} more
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-gray-500">Starting from</span>
-          <span className="text-lg font-bold text-green-600">₹{visaPrice.toLocaleString()}</span>
+          <span className="text-lg font-bold text-green-600">₹{startingPrice.toLocaleString()}</span>
         </div>
 
         <Button asChild className="w-full">

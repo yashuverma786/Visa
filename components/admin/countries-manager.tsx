@@ -6,13 +6,15 @@ import { useState, useEffect, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Upload, Save, X } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Plus, Edit, Trash2, Upload, Save, X, Copy } from "lucide-react"
 import Image from "next/image"
-import type { Country } from "@/lib/types"
+import type { Country, VisaCategory } from "@/lib/types"
 
 export default function CountriesManager() {
   const [countries, setCountries] = useState<Country[]>([])
@@ -25,14 +27,7 @@ export default function CountriesManager() {
     code: "",
     description: "",
     image: "",
-    visa: {
-      type: "B1-B2" as const,
-      price: 0,
-      processingTime: "",
-      requiredDocuments: [""],
-      processSteps: [""],
-      additionalInfo: "",
-    },
+    visaCategories: [] as VisaCategory[],
   })
 
   useEffect(() => {
@@ -75,8 +70,53 @@ export default function CountriesManager() {
     }
   }
 
+  const addVisaCategory = () => {
+    const newCategory: VisaCategory = {
+      id: `category_${Date.now()}`,
+      name: "",
+      type: "Tourist",
+      price: 0,
+      processingTime: "",
+      validity: "",
+      entries: "Single",
+      requiredDocuments: [""],
+      processSteps: [""],
+      eligibility: [""],
+      additionalInfo: "",
+    }
+    setFormData({
+      ...formData,
+      visaCategories: [...formData.visaCategories, newCategory],
+    })
+  }
+
+  const updateVisaCategory = (index: number, category: VisaCategory) => {
+    const newCategories = [...formData.visaCategories]
+    newCategories[index] = category
+    setFormData({ ...formData, visaCategories: newCategories })
+  }
+
+  const removeVisaCategory = (index: number) => {
+    const newCategories = formData.visaCategories.filter((_, i) => i !== index)
+    setFormData({ ...formData, visaCategories: newCategories })
+  }
+
+  const duplicateVisaCategory = (index: number) => {
+    const categoryToDuplicate = { ...formData.visaCategories[index] }
+    categoryToDuplicate.id = `category_${Date.now()}`
+    categoryToDuplicate.name = `${categoryToDuplicate.name} (Copy)`
+    const newCategories = [...formData.visaCategories]
+    newCategories.splice(index + 1, 0, categoryToDuplicate)
+    setFormData({ ...formData, visaCategories: newCategories })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (formData.visaCategories.length === 0) {
+      alert("Please add at least one visa category")
+      return
+    }
 
     startTransition(async () => {
       try {
@@ -95,11 +135,12 @@ export default function CountriesManager() {
           setIsDialogOpen(false)
           alert(editingCountry ? "Country updated successfully!" : "Country added successfully!")
         } else {
-          alert("Failed to save country")
+          const errorData = await response.json()
+          alert(`Failed to save country: ${errorData.error || "Unknown error"}`)
         }
       } catch (error) {
         console.error("Error saving country:", error)
-        alert("Error saving country")
+        alert("Error saving country. Please check your connection and try again.")
       }
     })
   }
@@ -111,7 +152,7 @@ export default function CountriesManager() {
       code: country.code,
       description: country.description,
       image: country.image,
-      visa: { ...country.visa },
+      visaCategories: country.visaCategories || [],
     })
     setIsDialogOpen(true)
   }
@@ -145,80 +186,7 @@ export default function CountriesManager() {
       code: "",
       description: "",
       image: "",
-      visa: {
-        type: "B1-B2",
-        price: 0,
-        processingTime: "",
-        requiredDocuments: [""],
-        processSteps: [""],
-        additionalInfo: "",
-      },
-    })
-  }
-
-  const addDocumentField = () => {
-    setFormData({
-      ...formData,
-      visa: {
-        ...formData.visa,
-        requiredDocuments: [...formData.visa.requiredDocuments, ""],
-      },
-    })
-  }
-
-  const removeDocumentField = (index: number) => {
-    const newDocs = formData.visa.requiredDocuments.filter((_, i) => i !== index)
-    setFormData({
-      ...formData,
-      visa: {
-        ...formData.visa,
-        requiredDocuments: newDocs,
-      },
-    })
-  }
-
-  const updateDocumentField = (index: number, value: string) => {
-    const newDocs = [...formData.visa.requiredDocuments]
-    newDocs[index] = value
-    setFormData({
-      ...formData,
-      visa: {
-        ...formData.visa,
-        requiredDocuments: newDocs,
-      },
-    })
-  }
-
-  const addProcessStep = () => {
-    setFormData({
-      ...formData,
-      visa: {
-        ...formData.visa,
-        processSteps: [...formData.visa.processSteps, ""],
-      },
-    })
-  }
-
-  const removeProcessStep = (index: number) => {
-    const newSteps = formData.visa.processSteps.filter((_, i) => i !== index)
-    setFormData({
-      ...formData,
-      visa: {
-        ...formData.visa,
-        processSteps: newSteps,
-      },
-    })
-  }
-
-  const updateProcessStep = (index: number, value: string) => {
-    const newSteps = [...formData.visa.processSteps]
-    newSteps[index] = value
-    setFormData({
-      ...formData,
-      visa: {
-        ...formData.visa,
-        processSteps: newSteps,
-      },
+      visaCategories: [],
     })
   }
 
@@ -237,11 +205,12 @@ export default function CountriesManager() {
               Add Country
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingCountry ? "Edit Country" : "Add New Country"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Basic Country Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="name">Country Name *</Label>
@@ -305,119 +274,37 @@ export default function CountriesManager() {
                 </div>
               </div>
 
+              {/* Visa Categories */}
               <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4">Visa Details (B1-B2)</h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Visa Categories *</h3>
+                  <Button type="button" onClick={addVisaCategory} variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Category
+                  </Button>
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <Label htmlFor="price">Visa Fee (₹) *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      value={formData.visa.price}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          visa: { ...formData.visa, price: Number.parseInt(e.target.value) },
-                        })
-                      }
-                      required
+                {formData.visaCategories.length === 0 && (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <p className="text-gray-500">No visa categories added yet. Click "Add Category" to get started.</p>
+                  </div>
+                )}
+
+                <div className="space-y-6">
+                  {formData.visaCategories.map((category, index) => (
+                    <VisaCategoryForm
+                      key={category.id}
+                      category={category}
+                      index={index}
+                      onUpdate={updateVisaCategory}
+                      onRemove={removeVisaCategory}
+                      onDuplicate={duplicateVisaCategory}
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="processingTime">Processing Time *</Label>
-                    <Input
-                      id="processingTime"
-                      value={formData.visa.processingTime}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          visa: { ...formData.visa, processingTime: e.target.value },
-                        })
-                      }
-                      placeholder="e.g., 15-30 days"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <Label>Required Documents *</Label>
-                  <div className="space-y-2 mt-2">
-                    {formData.visa.requiredDocuments.map((doc, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <Input
-                          value={doc}
-                          onChange={(e) => updateDocumentField(index, e.target.value)}
-                          placeholder="Enter required document"
-                          required
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeDocumentField(index)}
-                          disabled={formData.visa.requiredDocuments.length === 1}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button type="button" variant="outline" onClick={addDocumentField}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Document
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <Label>Process Steps *</Label>
-                  <div className="space-y-2 mt-2">
-                    {formData.visa.processSteps.map((step, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <span className="text-sm font-medium w-8">{index + 1}.</span>
-                        <Input
-                          value={step}
-                          onChange={(e) => updateProcessStep(index, e.target.value)}
-                          placeholder="Enter process step"
-                          required
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeProcessStep(index)}
-                          disabled={formData.visa.processSteps.length === 1}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button type="button" variant="outline" onClick={addProcessStep}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Step
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="additionalInfo">Additional Information</Label>
-                  <Textarea
-                    id="additionalInfo"
-                    value={formData.visa.additionalInfo}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        visa: { ...formData.visa, additionalInfo: e.target.value },
-                      })
-                    }
-                    rows={3}
-                    placeholder="Any additional visa information"
-                  />
+                  ))}
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-end space-x-2 pt-6 border-t">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
@@ -442,7 +329,9 @@ export default function CountriesManager() {
                   fill
                   className="object-cover rounded-t-lg"
                 />
-                <Badge className="absolute top-2 right-2 bg-blue-600">{country.visa.type}</Badge>
+                <div className="absolute top-2 right-2">
+                  <Badge className="bg-blue-600">{country.visaCategories?.length || 0} Categories</Badge>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-4">
@@ -455,17 +344,23 @@ export default function CountriesManager() {
 
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
-                  <span>Visa Fee:</span>
-                  <span className="font-semibold text-green-600">₹{country.visa.price.toLocaleString()}</span>
+                  <span>Categories:</span>
+                  <span className="font-semibold">{country.visaCategories?.length || 0}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span>Processing:</span>
-                  <span>{country.visa.processingTime}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Documents:</span>
-                  <span>{country.visa.requiredDocuments.length} required</span>
-                </div>
+                {country.visaCategories && country.visaCategories.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {country.visaCategories.slice(0, 3).map((cat, idx) => (
+                      <Badge key={idx} variant="outline" className="text-xs">
+                        {cat.type}
+                      </Badge>
+                    ))}
+                    {country.visaCategories.length > 3 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{country.visaCategories.length - 3} more
+                      </Badge>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex space-x-2">
@@ -492,5 +387,254 @@ export default function CountriesManager() {
         </div>
       )}
     </div>
+  )
+}
+
+// Visa Category Form Component
+function VisaCategoryForm({
+  category,
+  index,
+  onUpdate,
+  onRemove,
+  onDuplicate,
+}: {
+  category: VisaCategory
+  index: number
+  onUpdate: (index: number, category: VisaCategory) => void
+  onRemove: (index: number) => void
+  onDuplicate: (index: number) => void
+}) {
+  const updateField = (field: keyof VisaCategory, value: any) => {
+    onUpdate(index, { ...category, [field]: value })
+  }
+
+  const updateArrayField = (
+    field: "requiredDocuments" | "processSteps" | "eligibility",
+    index: number,
+    value: string,
+  ) => {
+    const newArray = [...category[field]]
+    newArray[index] = value
+    updateField(field, newArray)
+  }
+
+  const addArrayItem = (field: "requiredDocuments" | "processSteps" | "eligibility") => {
+    updateField(field, [...category[field], ""])
+  }
+
+  const removeArrayItem = (field: "requiredDocuments" | "processSteps" | "eligibility", itemIndex: number) => {
+    const newArray = category[field].filter((_, i) => i !== itemIndex)
+    updateField(field, newArray)
+  }
+
+  return (
+    <Card className="border-2 border-dashed border-gray-200">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg">Visa Category {index + 1}</CardTitle>
+          <div className="flex space-x-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => onDuplicate(index)}>
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button type="button" variant="destructive" size="sm" onClick={() => onRemove(index)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="basic" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="basic">Basic</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="process">Process</TabsTrigger>
+            <TabsTrigger value="eligibility">Eligibility</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="basic" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Category Name *</Label>
+                <Input
+                  value={category.name}
+                  onChange={(e) => updateField("name", e.target.value)}
+                  placeholder="e.g., Tourist Visa (B-2)"
+                  required
+                />
+              </div>
+              <div>
+                <Label>Type *</Label>
+                <Select value={category.type} onValueChange={(value) => updateField("type", value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Tourist">Tourist</SelectItem>
+                    <SelectItem value="Business">Business</SelectItem>
+                    <SelectItem value="Student">Student</SelectItem>
+                    <SelectItem value="Work">Work</SelectItem>
+                    <SelectItem value="Family">Family</SelectItem>
+                    <SelectItem value="Transit">Transit</SelectItem>
+                    <SelectItem value="Medical">Medical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Price (₹) *</Label>
+                <Input
+                  type="number"
+                  value={category.price}
+                  onChange={(e) => updateField("price", Number.parseInt(e.target.value))}
+                  required
+                />
+              </div>
+              <div>
+                <Label>Processing Time *</Label>
+                <Input
+                  value={category.processingTime}
+                  onChange={(e) => updateField("processingTime", e.target.value)}
+                  placeholder="e.g., 15-30 days"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Validity *</Label>
+                <Input
+                  value={category.validity}
+                  onChange={(e) => updateField("validity", e.target.value)}
+                  placeholder="e.g., Up to 10 years"
+                  required
+                />
+              </div>
+              <div>
+                <Label>Entries *</Label>
+                <Select
+                  value={category.entries}
+                  onValueChange={(value: "Single" | "Multiple") => updateField("entries", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Single">Single Entry</SelectItem>
+                    <SelectItem value="Multiple">Multiple Entry</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label>Additional Information</Label>
+              <Textarea
+                value={category.additionalInfo}
+                onChange={(e) => updateField("additionalInfo", e.target.value)}
+                rows={3}
+                placeholder="Any additional information about this visa category"
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="documents" className="space-y-4">
+            <div>
+              <Label>Required Documents *</Label>
+              <div className="space-y-2 mt-2">
+                {category.requiredDocuments.map((doc, docIndex) => (
+                  <div key={docIndex} className="flex items-center space-x-2">
+                    <Input
+                      value={doc}
+                      onChange={(e) => updateArrayField("requiredDocuments", docIndex, e.target.value)}
+                      placeholder="Enter required document"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeArrayItem("requiredDocuments", docIndex)}
+                      disabled={category.requiredDocuments.length === 1}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" onClick={() => addArrayItem("requiredDocuments")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Document
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="process" className="space-y-4">
+            <div>
+              <Label>Process Steps *</Label>
+              <div className="space-y-2 mt-2">
+                {category.processSteps.map((step, stepIndex) => (
+                  <div key={stepIndex} className="flex items-center space-x-2">
+                    <span className="text-sm font-medium w-8">{stepIndex + 1}.</span>
+                    <Input
+                      value={step}
+                      onChange={(e) => updateArrayField("processSteps", stepIndex, e.target.value)}
+                      placeholder="Enter process step"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeArrayItem("processSteps", stepIndex)}
+                      disabled={category.processSteps.length === 1}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" onClick={() => addArrayItem("processSteps")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Step
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="eligibility" className="space-y-4">
+            <div>
+              <Label>Eligibility Criteria *</Label>
+              <div className="space-y-2 mt-2">
+                {category.eligibility.map((criteria, criteriaIndex) => (
+                  <div key={criteriaIndex} className="flex items-center space-x-2">
+                    <Input
+                      value={criteria}
+                      onChange={(e) => updateArrayField("eligibility", criteriaIndex, e.target.value)}
+                      placeholder="Enter eligibility criteria"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeArrayItem("eligibility", criteriaIndex)}
+                      disabled={category.eligibility.length === 1}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" onClick={() => addArrayItem("eligibility")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Criteria
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   )
 }

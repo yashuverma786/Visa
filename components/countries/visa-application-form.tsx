@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Upload, FileText, X, CheckCircle } from "lucide-react"
-import type { Country } from "@/lib/types"
+import type { Country, VisaCategory } from "@/lib/types"
 
 interface VisaApplicationFormProps {
   country: Country
@@ -25,7 +26,7 @@ interface UploadedFile {
 export default function VisaApplicationForm({ country }: VisaApplicationFormProps) {
   const [isPending, startTransition] = useTransition()
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
-  const [selectedVisaType, setSelectedVisaType] = useState(country.visaTypes[0]?.type || "")
+  const [selectedCategory, setSelectedCategory] = useState<VisaCategory | null>(country.visaCategories?.[0] || null)
   const [formData, setFormData] = useState({
     applicantName: "",
     email: "",
@@ -84,6 +85,11 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!selectedCategory) {
+      alert("Please select a visa category.")
+      return
+    }
+
     if (uploadedFiles.length === 0) {
       alert("Please upload at least one document.")
       return
@@ -94,7 +100,7 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
         const applicationData = {
           ...formData,
           country: country.name,
-          visaType: country.visa.type,
+          visaCategory: selectedCategory.name,
           documents: uploadedFiles,
         }
 
@@ -137,6 +143,21 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
     return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
   }
 
+  // Ensure visa categories exist
+  if (!country.visaCategories || country.visaCategories.length === 0) {
+    return (
+      <section className="py-12 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <p className="text-gray-600">Visa categories not available for this country.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-12 bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -149,22 +170,48 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Visa Type Selection */}
+              {/* Visa Category Selection */}
               <div>
-                <Label htmlFor="visaType">Visa Type</Label>
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center justify-between">
+                <Label htmlFor="visaCategory">Select Visa Category *</Label>
+                <Select
+                  value={selectedCategory?.id || ""}
+                  onValueChange={(value) => {
+                    const category = country.visaCategories.find((cat) => cat.id === value)
+                    setSelectedCategory(category || null)
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a visa category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {country.visaCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name} - ₹{category.price.toLocaleString()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Selected Category Details */}
+              {selectedCategory && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <p className="font-semibold text-blue-900">{country.visa.type} - Business & Tourism</p>
-                      <p className="text-sm text-blue-700">Processing Time: {country.visa.processingTime}</p>
+                      <p className="text-sm font-medium text-blue-900">Processing Time</p>
+                      <p className="text-sm text-blue-700">{selectedCategory.processingTime}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-green-600">₹{country.visa.price.toLocaleString()}</p>
-                      <p className="text-xs text-gray-600">Visa Fee</p>
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">Validity</p>
+                      <p className="text-sm text-blue-700">{selectedCategory.validity}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">Visa Fee</p>
+                      <p className="text-lg font-bold text-green-600">₹{selectedCategory.price.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Personal Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -314,22 +361,29 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
                 )}
 
                 {/* Required Documents List */}
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Required Documents for {country.visa.type}:</h4>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    {country.visa.requiredDocuments.map((doc, index) => (
-                      <li key={index} className="flex items-center">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
-                        {doc}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {selectedCategory && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">Required Documents for {selectedCategory.name}:</h4>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      {selectedCategory.requiredDocuments?.map((doc, index) => (
+                        <li key={index} className="flex items-center">
+                          <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
+                          {doc}
+                        </li>
+                      )) || []}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               {/* Submit Button */}
               <div className="pt-6">
-                <Button type="submit" disabled={isPending || uploadedFiles.length === 0} className="w-full" size="lg">
+                <Button
+                  type="submit"
+                  disabled={isPending || uploadedFiles.length === 0 || !selectedCategory}
+                  className="w-full"
+                  size="lg"
+                >
                   {isPending ? "Submitting Application..." : "Submit Visa Application"}
                 </Button>
                 <p className="text-sm text-gray-500 mt-2 text-center">
