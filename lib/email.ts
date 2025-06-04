@@ -2,17 +2,17 @@ import type { VisaApplication } from "./types"
 
 // Check if email configuration is available
 const isEmailConfigured = () => {
-  return !!(process.env.SMTP_USER && process.env.SMTP_PASS)
+  return !!(process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST)
 }
 
 export async function sendVisaApplicationEmail(application: VisaApplication) {
+  console.log("Attempting to send visa application email...")
+
   if (!isEmailConfigured()) {
-    console.log("Email not configured. Application would be sent:", {
-      to: "visa@journeymytrip.com",
-      subject: `New Visa Application - ${application.applicantName} (${application.country})`,
-      application,
-    })
-    return
+    console.log("Email not configured. Missing SMTP environment variables.")
+    console.log("Required: SMTP_USER, SMTP_PASS, SMTP_HOST")
+    console.log("Application would be sent to: visa@journeymytrip.com")
+    return { success: false, error: "Email not configured" }
   }
 
   try {
@@ -20,43 +20,51 @@ export async function sendVisaApplicationEmail(application: VisaApplication) {
     const nodemailer = await import("nodemailer")
 
     const transporter = nodemailer.createTransporter({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      host: process.env.SMTP_HOST,
       port: Number.parseInt(process.env.SMTP_PORT || "587"),
-      secure: false,
+      secure: process.env.SMTP_PORT === "465", // true for 465, false for other ports
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      tls: {
+        rejectUnauthorized: false, // Allow self-signed certificates
+      },
     })
 
+    // Verify connection
+    await transporter.verify()
+    console.log("SMTP connection verified successfully")
+
     const documentsList =
-      application.documents?.map((doc) => `- ${doc.name} (${doc.type}) - ${doc.url}`).join("\n") ||
-      "No documents uploaded"
+      application.documents && application.documents.length > 0
+        ? application.documents.map((doc) => `- ${doc.name} (${doc.type}) - ${doc.url || "No URL"}`).join("\n")
+        : "No documents uploaded"
 
     const emailContent = `
-      🎯 NEW VISA APPLICATION RECEIVED
-      
-      Applicant Details:
-      - Name: ${application.applicantName}
-      - Email: ${application.email}
-      - Phone: ${application.phone}
-      - Date of Birth: ${application.dateOfBirth || "Not provided"}
-      - Nationality: ${application.nationality || "Not provided"}
-      - Passport Number: ${application.passportNumber || "Not provided"}
-      - Country: ${application.country}
-      - Visa Category: ${application.visaCategory}
-      - Travel Date: ${application.travelDate || "Not specified"}
-      - Purpose: ${application.purpose || "Not specified"}
-      
-      Documents Submitted:
-      ${documentsList}
-      
-      Additional Information:
-      ${application.additionalInfo || "None provided"}
-      
-      Application submitted at: ${new Date(application.submittedAt).toLocaleString()}
-      
-      Please review the application in the admin console.
+🎯 NEW VISA APPLICATION RECEIVED
+
+Applicant Details:
+- Name: ${application.applicantName || "Not provided"}
+- Email: ${application.email || "Not provided"}
+- Phone: ${application.phone || "Not provided"}
+- Date of Birth: ${application.dateOfBirth || "Not provided"}
+- Nationality: ${application.nationality || "Not provided"}
+- Passport Number: ${application.passportNumber || "Not provided"}
+- Country: ${application.country || "Not provided"}
+- Visa Category: ${application.visaCategory || "Not provided"}
+- Travel Date: ${application.travelDate || "Not specified"}
+- Purpose: ${application.purpose || "Not specified"}
+
+Documents Submitted:
+${documentsList}
+
+Additional Information:
+${application.additionalInfo || "None provided"}
+
+Application submitted at: ${new Date(application.submittedAt).toLocaleString()}
+
+Please review the application in the admin console.
     `
 
     const mailOptions = {
@@ -67,124 +75,140 @@ export async function sendVisaApplicationEmail(application: VisaApplication) {
       html: emailContent.replace(/\n/g, "<br>"),
     }
 
-    await transporter.sendMail(mailOptions)
-    console.log("Email sent successfully to visa@journeymytrip.com")
+    const result = await transporter.sendMail(mailOptions)
+    console.log("Email sent successfully to visa@journeymytrip.com", result.messageId)
+    return { success: true, messageId: result.messageId }
   } catch (error) {
-    console.error("Error sending email:", error)
-    // Don't throw error, just log it
+    console.error("Error sending visa application email:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }
 
 export async function sendLeadNotificationEmail(lead: any) {
+  console.log("Attempting to send lead notification email for:", lead.name)
+
   if (!isEmailConfigured()) {
-    console.log("Email not configured. Lead notification would be sent:", {
-      to: "visa@journeymytrip.com",
-      subject: `New Lead - ${lead.name}`,
-      lead,
-    })
-    return
+    console.log("Email not configured. Missing SMTP environment variables.")
+    console.log("Lead notification would be sent to: visa@journeymytrip.com")
+    return { success: false, error: "Email not configured" }
   }
 
   try {
     const nodemailer = await import("nodemailer")
 
     const transporter = nodemailer.createTransporter({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      host: process.env.SMTP_HOST,
       port: Number.parseInt(process.env.SMTP_PORT || "587"),
-      secure: false,
+      secure: process.env.SMTP_PORT === "465",
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      tls: {
+        rejectUnauthorized: false,
+      },
     })
 
+    // Verify connection
+    await transporter.verify()
+    console.log("SMTP connection verified for lead notification")
+
     const documentsList =
-      lead.documents?.map((doc: any) => `- ${doc.name} (${doc.type}) - ${doc.url}`).join("\n") ||
-      "No documents uploaded"
+      lead.documents && lead.documents.length > 0
+        ? lead.documents.map((doc: any) => `- ${doc.name} (${doc.type}) - ${doc.url || "No URL"}`).join("\n")
+        : "No documents uploaded"
 
     const emailContent = `
-      📧 NEW FORM LEAD CAPTURED
-      
-      Lead Details:
-      - Name: ${lead.name}
-      - Email: ${lead.email}
-      - Phone: ${lead.phone}
-      - Visa Type: ${lead.visaType || "Not specified"}
-      - Country: ${lead.country || lead.placeToVisit || "Not specified"}
-      - Message: ${lead.message || "No message"}
-      - Source: ${lead.source || "Website"}
-      
-      Documents Submitted:
-      ${documentsList}
-      
-      Lead captured at: ${new Date(lead.createdAt).toLocaleString()}
+📧 NEW FORM LEAD CAPTURED
+
+Lead Details:
+- Name: ${lead.name || "Not provided"}
+- Email: ${lead.email || "Not provided"}
+- Phone: ${lead.phone || "Not provided"}
+- Visa Type: ${lead.visaType || "Not specified"}
+- Country: ${lead.country || lead.placeToVisit || "Not specified"}
+- Message: ${lead.message || "No message"}
+- Source: ${lead.source || "Website"}
+
+Documents Submitted:
+${documentsList}
+
+Lead captured at: ${new Date(lead.createdAt || new Date()).toLocaleString()}
+
+Please follow up with this lead promptly.
     `
 
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: "visa@journeymytrip.com",
-      subject: `📧 New Lead - ${lead.name}`,
+      subject: `📧 New Lead - ${lead.name} (${lead.country || lead.placeToVisit || "Unknown"})`,
       text: emailContent,
       html: emailContent.replace(/\n/g, "<br>"),
     }
 
-    await transporter.sendMail(mailOptions)
-    console.log("Lead notification sent successfully to visa@journeymytrip.com")
+    const result = await transporter.sendMail(mailOptions)
+    console.log("Lead notification sent successfully to visa@journeymytrip.com", result.messageId)
+    return { success: true, messageId: result.messageId }
   } catch (error) {
     console.error("Error sending lead notification email:", error)
-    // Don't throw error, just log it
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }
 
 export async function sendPopupLeadEmail(lead: any) {
+  console.log("Attempting to send popup lead email for:", lead.name)
+
   if (!isEmailConfigured()) {
-    console.log("Email not configured. Popup lead would be sent:", {
-      to: "visa@journeymytrip.com",
-      subject: `🎯 New Popup Lead - ${lead.name}`,
-      lead,
-    })
-    return
+    console.log("Email not configured. Popup lead would be sent to: visa@journeymytrip.com")
+    return { success: false, error: "Email not configured" }
   }
 
   try {
     const nodemailer = await import("nodemailer")
 
     const transporter = nodemailer.createTransporter({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      host: process.env.SMTP_HOST,
       port: Number.parseInt(process.env.SMTP_PORT || "587"),
-      secure: false,
+      secure: process.env.SMTP_PORT === "465",
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      tls: {
+        rejectUnauthorized: false,
+      },
     })
 
+    await transporter.verify()
+
     const emailContent = `
-      🎯 NEW POPUP LEAD CAPTURED
-      
-      Lead Details:
-      - Name: ${lead.name}
-      - Email: ${lead.email}
-      - Phone: ${lead.phone}
-      - Place to Visit: ${lead.placeToVisit}
-      - Source: Website Popup
-      
-      Lead captured at: ${new Date(lead.createdAt).toLocaleString()}
-      
-      ⚡ This is a hot lead from the website popup! Contact immediately for best conversion.
+🎯 NEW POPUP LEAD CAPTURED
+
+Lead Details:
+- Name: ${lead.name || "Not provided"}
+- Email: ${lead.email || "Not provided"}
+- Phone: ${lead.phone || "Not provided"}
+- Place to Visit: ${lead.placeToVisit || "Not specified"}
+- Source: Website Popup
+
+Lead captured at: ${new Date(lead.createdAt || new Date()).toLocaleString()}
+
+⚡ This is a hot lead from the website popup! Contact immediately for best conversion.
     `
 
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: "visa@journeymytrip.com",
-      subject: `🎯 New Popup Lead - ${lead.name} (${lead.placeToVisit})`,
+      subject: `🎯 New Popup Lead - ${lead.name} (${lead.placeToVisit || "Unknown"})`,
       text: emailContent,
       html: emailContent.replace(/\n/g, "<br>"),
     }
 
-    await transporter.sendMail(mailOptions)
-    console.log("Popup lead notification sent successfully to visa@journeymytrip.com")
+    const result = await transporter.sendMail(mailOptions)
+    console.log("Popup lead notification sent successfully", result.messageId)
+    return { success: true, messageId: result.messageId }
   } catch (error) {
     console.error("Error sending popup lead notification email:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }

@@ -32,6 +32,13 @@ if (process.env.NODE_ENV === "development") {
   clientPromise = client.connect()
 }
 
-// Export a module-scoped MongoClient promise. By doing this in a
-// separate module, the client can be shared across functions.
+// Test the connection
+clientPromise
+  .then(() => {
+    console.log("✅ MongoDB connected successfully")
+  })
+  .catch((error) => {
+    console.error("❌ MongoDB connection failed:", error)
+  })
+
 export default clientPromise

@@ -3,14 +3,19 @@ import type { Country, VisaApplication, Testimonial, LeadCapture } from "./types
 import { sampleCountries } from "./seed-data"
 import type { MongoClient } from "mongodb"
 
-const DB_NAME = "jmtvisa" // Updated to use your database name
+const DB_NAME = "jmtvisa"
 
 export async function getDatabase() {
-  if (!clientPromise) {
-    throw new Error("MongoDB connection not available")
+  try {
+    if (!clientPromise) {
+      throw new Error("MongoDB connection not available")
+    }
+    const client = await clientPromise
+    return client.db(DB_NAME)
+  } catch (error) {
+    console.error("Error getting database:", error)
+    throw error
   }
-  const client = await clientPromise
-  return client.db(DB_NAME)
 }
 
 // Check if database is available
@@ -24,23 +29,22 @@ export async function isDatabaseAvailable(): Promise<boolean> {
 
     const client = (await Promise.race([
       clientPromise,
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Connection timeout")), 5000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Connection timeout")), 10000)),
     ])) as MongoClient
 
     await client.db(DB_NAME).admin().ping()
-    console.log("Database connection successful")
+    console.log("✅ Database connection successful")
     return true
   } catch (error) {
-    console.log("Database not available:", error instanceof Error ? error.message : "Unknown error")
+    console.error("❌ Database not available:", error instanceof Error ? error.message : "Unknown error")
     return false
   }
 }
 
-// Countries - Always return valid array
+// Countries
 export async function getCountries(): Promise<Country[]> {
-  console.log("Fetching countries...")
+  console.log("🔍 Fetching countries...")
 
-  // Always return sample data during build to prevent prerender errors
   const fallbackData = sampleCountries.map((country, index) => ({
     ...country,
     _id: `sample_${index}`,
@@ -58,10 +62,8 @@ export async function getCountries(): Promise<Country[]> {
     }
 
     const db = await getDatabase()
-    console.log("Getting countries from database...")
-
     const countries = await db.collection("countries").find({}).toArray()
-    console.log("Found countries in database:", countries.length)
+    console.log(`Found ${countries.length} countries in database`)
 
     if (!countries || countries.length === 0) {
       console.log("No countries in database, using fallback")
@@ -73,7 +75,6 @@ export async function getCountries(): Promise<Country[]> {
       _id: country._id.toString(),
     }))
 
-    console.log("Returning database countries:", processedCountries.length)
     return processedCountries
   } catch (error) {
     console.error("Error fetching countries, using fallback:", error)
@@ -81,68 +82,37 @@ export async function getCountries(): Promise<Country[]> {
   }
 }
 
-export async function getCountryByCode(code: string): Promise<Country | null> {
-  try {
-    console.log("Fetching country by code:", code)
-
-    // First try sample data
-    const sampleCountry = sampleCountries.find((c) => c.code === code.toUpperCase())
-    const fallbackCountry = sampleCountry
-      ? {
-          ...sampleCountry,
-          _id: `sample_${code}`,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }
-      : null
-
-    if (!(await isDatabaseAvailable())) {
-      console.log("Database not available, using fallback for country:", code)
-      return fallbackCountry
-    }
-
-    const db = await getDatabase()
-    const country = await db.collection("countries").findOne({ code: code.toUpperCase() })
-
-    if (!country) {
-      console.log("Country not found in database, using fallback:", code)
-      return fallbackCountry
-    }
-
-    console.log("Found country in database:", country.name)
-    return { ...country, _id: country._id.toString() }
-  } catch (error) {
-    console.error("Error fetching country:", error)
-    // Fallback to sample data
-    const sampleCountry = sampleCountries.find((c) => c.code === code.toUpperCase())
-    return sampleCountry
-      ? {
-          ...sampleCountry,
-          _id: `sample_${code}`,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }
-      : null
-  }
-}
-
 export async function createCountry(country: Omit<Country, "_id">): Promise<Country> {
   try {
-    console.log("Creating country:", country.name)
+    console.log("🆕 Creating country:", country.name)
 
     if (!(await isDatabaseAvailable())) {
       throw new Error("Database not available. Please check your MongoDB connection.")
     }
 
-    const db = await getDatabase()
-
     // Validate required fields
-    if (!country.name || !country.code || !country.visaCategories || country.visaCategories.length === 0) {
-      throw new Error("Missing required fields: name, code, and at least one visa category")
+    if (!country.name || !country.code) {
+      throw new Error("Missing required fields: name and code are required")
     }
 
+    if (!country.visaCategories || country.visaCategories.length === 0) {
+      throw new Error("At least one visa category is required")
+    }
+
+    // Validate visa categories
+    for (const category of country.visaCategories) {
+      if (!category.name || !category.type || !category.price || !category.processingTime) {
+        throw new Error("Each visa category must have name, type, price, and processing time")
+      }
+    }
+
+    const db = await getDatabase()
+
     // Check if country already exists
-    const existingCountry = await db.collection("countries").findOne({ code: country.code.toUpperCase() })
+    const existingCountry = await db.collection("countries").findOne({
+      code: country.code.toUpperCase(),
+    })
+
     if (existingCountry) {
       throw new Error(`Country with code ${country.code} already exists`)
     }
@@ -155,18 +125,18 @@ export async function createCountry(country: Omit<Country, "_id">): Promise<Coun
     }
 
     const result = await db.collection("countries").insertOne(countryData)
-    console.log("Country created successfully:", result.insertedId)
+    console.log("✅ Country created successfully:", result.insertedId)
 
     return { ...countryData, _id: result.insertedId.toString() }
   } catch (error) {
-    console.error("Error creating country:", error)
+    console.error("❌ Error creating country:", error)
     throw error
   }
 }
 
 export async function updateCountry(id: string, country: Partial<Country>): Promise<boolean> {
   try {
-    console.log("Updating country:", id)
+    console.log("📝 Updating country:", id)
 
     if (!(await isDatabaseAvailable())) {
       throw new Error("Database not available")
@@ -174,6 +144,11 @@ export async function updateCountry(id: string, country: Partial<Country>): Prom
 
     const db = await getDatabase()
     const { ObjectId } = require("mongodb")
+
+    // Validate ObjectId
+    if (!ObjectId.isValid(id)) {
+      throw new Error("Invalid country ID format")
+    }
 
     const updateData = {
       ...country,
@@ -189,39 +164,77 @@ export async function updateCountry(id: string, country: Partial<Country>): Prom
     console.log("Country update result:", result.modifiedCount)
     return result.modifiedCount > 0
   } catch (error) {
-    console.error("Error updating country:", error)
+    console.error("❌ Error updating country:", error)
     throw error
   }
 }
 
-export async function deleteCountry(id: string): Promise<boolean> {
+// Lead Capture - Save to 'leads' collection
+export async function createLead(lead: Omit<LeadCapture, "_id">): Promise<LeadCapture> {
   try {
-    console.log("Deleting country:", id)
+    console.log("🆕 Creating lead:", lead.name)
 
     if (!(await isDatabaseAvailable())) {
-      throw new Error("Database not available")
+      console.log("⚠️ Database not available, creating temporary lead")
+      return {
+        ...lead,
+        _id: `temp_${Date.now()}`,
+        createdAt: new Date(),
+      }
     }
 
     const db = await getDatabase()
-    const { ObjectId } = require("mongodb")
-    const result = await db.collection("countries").deleteOne({ _id: new ObjectId(id) })
+    const leadData = {
+      ...lead,
+      createdAt: new Date(),
+    }
 
-    console.log("Country delete result:", result.deletedCount)
-    return result.deletedCount > 0
+    const result = await db.collection("leads").insertOne(leadData)
+    console.log("✅ Lead created successfully:", result.insertedId)
+
+    return { ...leadData, _id: result.insertedId.toString() }
   } catch (error) {
-    console.error("Error deleting country:", error)
-    throw error
+    console.error("❌ Error creating lead:", error)
+    // Return lead with temp ID if database fails
+    return {
+      ...lead,
+      _id: `temp_${Date.now()}`,
+      createdAt: new Date(),
+    }
+  }
+}
+
+export async function getLeads(): Promise<LeadCapture[]> {
+  try {
+    console.log("🔍 Fetching leads...")
+
+    if (!(await isDatabaseAvailable())) {
+      console.log("Database not available, returning empty array")
+      return []
+    }
+
+    const db = await getDatabase()
+    const leads = await db.collection("leads").find({}).sort({ createdAt: -1 }).toArray()
+
+    console.log(`Found ${leads.length} leads in database`)
+
+    return leads.map((lead) => ({
+      ...lead,
+      _id: lead._id.toString(),
+    }))
+  } catch (error) {
+    console.error("❌ Error fetching leads:", error)
+    return []
   }
 }
 
 // Visa Applications
 export async function createVisaApplication(application: Omit<VisaApplication, "_id">): Promise<VisaApplication> {
   try {
-    console.log("Creating visa application for:", application.applicantName)
+    console.log("🆕 Creating visa application for:", application.applicantName)
 
     if (!(await isDatabaseAvailable())) {
-      // If database is not available, just return the application with a generated ID
-      console.log("Database not available, application would be stored:", application)
+      console.log("⚠️ Database not available, creating temporary application")
       return {
         ...application,
         _id: `temp_${Date.now()}`,
@@ -238,12 +251,11 @@ export async function createVisaApplication(application: Omit<VisaApplication, "
     }
 
     const result = await db.collection("visa_applications").insertOne(applicationData)
-    console.log("Visa application created:", result.insertedId)
+    console.log("✅ Visa application created:", result.insertedId)
 
     return { ...applicationData, _id: result.insertedId.toString() }
   } catch (error) {
-    console.error("Error creating visa application:", error)
-    // Return application with temp ID if database fails
+    console.error("❌ Error creating visa application:", error)
     return {
       ...application,
       _id: `temp_${Date.now()}`,
@@ -275,7 +287,6 @@ export async function getVisaApplications(): Promise<VisaApplication[]> {
 export async function getTestimonials(): Promise<Testimonial[]> {
   try {
     if (!(await isDatabaseAvailable())) {
-      // Return sample testimonials if database is not available
       return [
         {
           _id: "sample_1",
@@ -330,62 +341,75 @@ export async function createTestimonial(testimonial: Omit<Testimonial, "_id">): 
   }
 }
 
-// Lead Capture - Updated to use 'leads' collection as requested
-export async function createLead(lead: Omit<LeadCapture, "_id">): Promise<LeadCapture> {
+// Additional helper functions
+export async function getCountryByCode(code: string): Promise<Country | null> {
   try {
-    console.log("Creating lead:", lead.name)
+    console.log("🔍 Fetching country by code:", code)
+
+    const sampleCountry = sampleCountries.find((c) => c.code === code.toUpperCase())
+    const fallbackCountry = sampleCountry
+      ? {
+          ...sampleCountry,
+          _id: `sample_${code}`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }
+      : null
 
     if (!(await isDatabaseAvailable())) {
-      // If database is not available, just log the lead and return with temp ID
-      console.log("Database not available, lead would be stored:", lead)
-      return {
-        ...lead,
-        _id: `temp_${Date.now()}`,
-        createdAt: new Date(),
-      }
+      console.log("Database not available, using fallback for country:", code)
+      return fallbackCountry
     }
 
     const db = await getDatabase()
-    const leadData = {
-      ...lead,
-      createdAt: new Date(),
+    const country = await db.collection("countries").findOne({ code: code.toUpperCase() })
+
+    if (!country) {
+      console.log("Country not found in database, using fallback:", code)
+      return fallbackCountry
     }
 
-    // Save to 'leads' collection as requested
-    const result = await db.collection("leads").insertOne(leadData)
-    console.log("Lead created:", result.insertedId)
-
-    return { ...leadData, _id: result.insertedId.toString() }
+    console.log("✅ Found country in database:", country.name)
+    return { ...country, _id: country._id.toString() }
   } catch (error) {
-    console.error("Error creating lead:", error)
-    // Return lead with temp ID if database fails
-    return {
-      ...lead,
-      _id: `temp_${Date.now()}`,
-      createdAt: new Date(),
-    }
+    console.error("Error fetching country:", error)
+    const sampleCountry = sampleCountries.find((c) => c.code === code.toUpperCase())
+    return sampleCountry
+      ? {
+          ...sampleCountry,
+          _id: `sample_${code}`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }
+      : null
   }
 }
 
-export async function getLeads(): Promise<LeadCapture[]> {
+export async function deleteCountry(id: string): Promise<boolean> {
   try {
+    console.log("🗑️ Deleting country:", id)
+
     if (!(await isDatabaseAvailable())) {
-      return []
+      throw new Error("Database not available")
     }
 
     const db = await getDatabase()
-    const leads = await db.collection("leads").find({}).sort({ createdAt: -1 }).toArray()
-    return leads.map((lead) => ({
-      ...lead,
-      _id: lead._id.toString(),
-    }))
+    const { ObjectId } = require("mongodb")
+
+    if (!ObjectId.isValid(id)) {
+      throw new Error("Invalid country ID format")
+    }
+
+    const result = await db.collection("countries").deleteOne({ _id: new ObjectId(id) })
+
+    console.log("Country delete result:", result.deletedCount)
+    return result.deletedCount > 0
   } catch (error) {
-    console.error("Error fetching leads:", error)
-    return []
+    console.error("❌ Error deleting country:", error)
+    throw error
   }
 }
 
-// Update visa application status
 export async function updateVisaApplicationStatus(id: string, status: string, notes?: string): Promise<boolean> {
   try {
     if (!(await isDatabaseAvailable())) {
@@ -412,7 +436,6 @@ export async function updateVisaApplicationStatus(id: string, status: string, no
   }
 }
 
-// Update testimonial
 export async function updateTestimonial(id: string, testimonial: Partial<Testimonial>): Promise<boolean> {
   try {
     if (!(await isDatabaseAvailable())) {
@@ -431,7 +454,6 @@ export async function updateTestimonial(id: string, testimonial: Partial<Testimo
   }
 }
 
-// Delete testimonial
 export async function deleteTestimonial(id: string): Promise<boolean> {
   try {
     if (!(await isDatabaseAvailable())) {
