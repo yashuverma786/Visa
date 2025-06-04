@@ -3,7 +3,7 @@ import type { Country, VisaApplication, Testimonial, LeadCapture } from "./types
 import { sampleCountries } from "./seed-data"
 import type { MongoClient } from "mongodb"
 
-const DB_NAME = "visa_immigration"
+const DB_NAME = "jmtvisa" // Updated to use your database name
 
 export async function getDatabase() {
   if (!clientPromise) {
@@ -330,7 +330,7 @@ export async function createTestimonial(testimonial: Omit<Testimonial, "_id">): 
   }
 }
 
-// Lead Capture
+// Lead Capture - Updated to use 'leads' collection as requested
 export async function createLead(lead: Omit<LeadCapture, "_id">): Promise<LeadCapture> {
   try {
     console.log("Creating lead:", lead.name)
@@ -351,6 +351,7 @@ export async function createLead(lead: Omit<LeadCapture, "_id">): Promise<LeadCa
       createdAt: new Date(),
     }
 
+    // Save to 'leads' collection as requested
     const result = await db.collection("leads").insertOne(leadData)
     console.log("Lead created:", result.insertedId)
 

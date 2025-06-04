@@ -86,7 +86,10 @@ export interface LeadCapture {
   phone: string
   placeToVisit: string
   message?: string
-  source: "popup" | "hero" | "contact"
+  visaType?: string
+  country?: string
+  documents?: UploadedDocument[] // Add document support
+  source: "popup" | "hero" | "contact" | "form" | "visa-application"
   createdAt?: Date
 }
 
