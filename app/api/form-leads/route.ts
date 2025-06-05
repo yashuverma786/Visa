@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createLead } from "@/lib/database"
+import { createCustomer } from "@/lib/database"
 import { sendLeadNotificationEmail } from "@/lib/email"
 
 export async function POST(request: NextRequest) {
@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create lead in database
-    const leadData = {
+    // Create customer in database
+    const customerData = {
       name: data.name,
       email: data.email,
       phone: data.phone,
@@ -37,12 +37,12 @@ export async function POST(request: NextRequest) {
       source: "form" as const,
     }
 
-    const lead = await createLead(leadData)
-    console.log("✅ Lead created successfully:", lead._id)
+    const customer = await createCustomer(customerData)
+    console.log("✅ Customer created successfully:", customer._id)
 
     // Send notification email
     try {
-      const emailResult = await sendLeadNotificationEmail(lead)
+      const emailResult = await sendLeadNotificationEmail(customer)
       if (emailResult.success) {
         console.log("✅ Email notification sent successfully")
       } else {
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      lead: { _id: lead._id, name: lead.name },
+      customer: { _id: customer._id, name: customer.name },
       message: "Form submitted successfully!",
     })
   } catch (error) {

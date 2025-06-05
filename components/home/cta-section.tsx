@@ -21,7 +21,9 @@ export default function CTASection() {
             </div>
             <h3 className="text-xl font-semibold mb-2">Call Us</h3>
             <p className="text-blue-100 mb-4">Speak directly with our visa experts</p>
-            <p className="font-semibold">+91 9876543210</p>
+            <a href="tel:+919312540202" className="font-semibold hover:text-blue-200 transition-colors">
+              +91 9312540202
+            </a>
           </div>
 
           <div className="text-center">
@@ -30,7 +32,9 @@ export default function CTASection() {
             </div>
             <h3 className="text-xl font-semibold mb-2">Email Us</h3>
             <p className="text-blue-100 mb-4">Send us your queries anytime</p>
-            <p className="font-semibold">visa@journeymytrip.com</p>
+            <a href="mailto:visa@journeymytrip.com" className="font-semibold hover:text-blue-200 transition-colors">
+              visa@journeymytrip.com
+            </a>
           </div>
 
           <div className="text-center">
@@ -45,7 +49,7 @@ export default function CTASection() {
 
         <div className="text-center space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
           <Button asChild size="lg" variant="secondary" className="w-full sm:w-auto">
-            <Link href="/visa-assistance">Get Free Consultation</Link>
+            <Link href="/contact">Get Free Consultation</Link>
           </Button>
           <Button
             asChild

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { checkAdminAuth } from "@/lib/auth"
-import { getLeads } from "@/lib/database"
+import { getCustomers } from "@/lib/database"
 
 export async function GET(request: NextRequest) {
   if (!checkAdminAuth(request)) {
@@ -8,10 +8,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const leads = await getLeads()
-    return NextResponse.json(leads)
+    const customers = await getCustomers()
+    return NextResponse.json(customers)
   } catch (error) {
-    console.error("Error fetching leads:", error)
-    return NextResponse.json({ error: "Failed to fetch leads" }, { status: 500 })
+    console.error("Error fetching customers:", error)
+    return NextResponse.json({ error: "Failed to fetch customers" }, { status: 500 })
   }
 }

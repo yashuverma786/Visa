@@ -101,7 +101,7 @@ export async function createCountry(country: Omit<Country, "_id">): Promise<Coun
 
     // Validate visa categories
     for (const category of country.visaCategories) {
-      if (!category.name || !category.type || !category.price || !category.processingTime) {
+      if (!category.name || !category.type || category.price === undefined || !category.processingTime) {
         throw new Error("Each visa category must have name, type, price, and processing time")
       }
     }
@@ -169,44 +169,50 @@ export async function updateCountry(id: string, country: Partial<Country>): Prom
   }
 }
 
-// Lead Capture - Save to 'leads' collection
-export async function createLead(lead: Omit<LeadCapture, "_id">): Promise<LeadCapture> {
+// Customer/Lead Capture - Save to 'customers' collection as requested
+export async function createCustomer(customer: Omit<LeadCapture, "_id">): Promise<LeadCapture> {
   try {
-    console.log("🆕 Creating lead:", lead.name)
+    console.log("🆕 Creating customer:", customer.name)
 
     if (!(await isDatabaseAvailable())) {
-      console.log("⚠️ Database not available, creating temporary lead")
+      console.log("⚠️ Database not available, creating temporary customer")
       return {
-        ...lead,
+        ...customer,
         _id: `temp_${Date.now()}`,
         createdAt: new Date(),
       }
     }
 
     const db = await getDatabase()
-    const leadData = {
-      ...lead,
+    const customerData = {
+      ...customer,
       createdAt: new Date(),
     }
 
-    const result = await db.collection("leads").insertOne(leadData)
-    console.log("✅ Lead created successfully:", result.insertedId)
+    // Save to 'customers' collection as requested
+    const result = await db.collection("customers").insertOne(customerData)
+    console.log("✅ Customer created successfully:", result.insertedId)
 
-    return { ...leadData, _id: result.insertedId.toString() }
+    return { ...customerData, _id: result.insertedId.toString() }
   } catch (error) {
-    console.error("❌ Error creating lead:", error)
-    // Return lead with temp ID if database fails
+    console.error("❌ Error creating customer:", error)
+    // Return customer with temp ID if database fails
     return {
-      ...lead,
+      ...customer,
       _id: `temp_${Date.now()}`,
       createdAt: new Date(),
     }
   }
 }
 
-export async function getLeads(): Promise<LeadCapture[]> {
+// Keep the old function for backward compatibility but redirect to customers
+export async function createLead(lead: Omit<LeadCapture, "_id">): Promise<LeadCapture> {
+  return createCustomer(lead)
+}
+
+export async function getCustomers(): Promise<LeadCapture[]> {
   try {
-    console.log("🔍 Fetching leads...")
+    console.log("🔍 Fetching customers...")
 
     if (!(await isDatabaseAvailable())) {
       console.log("Database not available, returning empty array")
@@ -214,18 +220,23 @@ export async function getLeads(): Promise<LeadCapture[]> {
     }
 
     const db = await getDatabase()
-    const leads = await db.collection("leads").find({}).sort({ createdAt: -1 }).toArray()
+    const customers = await db.collection("customers").find({}).sort({ createdAt: -1 }).toArray()
 
-    console.log(`Found ${leads.length} leads in database`)
+    console.log(`Found ${customers.length} customers in database`)
 
-    return leads.map((lead) => ({
-      ...lead,
-      _id: lead._id.toString(),
+    return customers.map((customer) => ({
+      ...customer,
+      _id: customer._id.toString(),
     }))
   } catch (error) {
-    console.error("❌ Error fetching leads:", error)
+    console.error("❌ Error fetching customers:", error)
     return []
   }
+}
+
+// Keep the old function for backward compatibility
+export async function getLeads(): Promise<LeadCapture[]> {
+  return getCustomers()
 }
 
 // Visa Applications
