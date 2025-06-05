@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Plane } from "lucide-react"
+import { Menu, X, Plane, Phone } from "lucide-react"
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -42,7 +42,10 @@ export default function Header() {
           {/* CTA Button */}
           <div className="hidden md:flex">
             <Button asChild>
-              <Link href="/visa-assistance">Get Started</Link>
+              <a href="tel:+919599076202" className="flex items-center">
+                <Phone className="h-4 w-4 mr-2" />
+                Get Started
+              </a>
             </Button>
           </div>
 
@@ -70,7 +73,10 @@ export default function Header() {
               ))}
               <div className="pt-2">
                 <Button asChild className="w-full">
-                  <Link href="/visa-assistance">Get Started</Link>
+                  <a href="tel:+919599076202" className="flex items-center justify-center">
+                    <Phone className="h-4 w-4 mr-2" />
+                    Get Started
+                  </a>
                 </Button>
               </div>
             </div>

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, FileText, X, CheckCircle } from "lucide-react"
+import { Upload, FileText, X, CheckCircle, AlertCircle } from "lucide-react"
 import type { Country, VisaCategory } from "@/lib/types"
 
 interface VisaApplicationFormProps {
@@ -27,6 +27,8 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
   const [isPending, startTransition] = useTransition()
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [selectedCategory, setSelectedCategory] = useState<VisaCategory | null>(country.visaCategories?.[0] || null)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [formData, setFormData] = useState({
     applicantName: "",
     email: "",
@@ -45,13 +47,13 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
     for (const file of files) {
       if (file.size > 10 * 1024 * 1024) {
         // 10MB limit
-        alert(`File ${file.name} is too large. Maximum size is 10MB.`)
+        setError(`File ${file.name} is too large. Maximum size is 10MB.`)
         continue
       }
 
       try {
         // Upload to Vercel Blob
-        const response = await fetch(`/api/upload?filename=${file.name}`, {
+        const response = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
           method: "POST",
           body: file,
         })
@@ -68,12 +70,14 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
               url: url,
             },
           ])
+          setError("") // Clear any previous errors
         } else {
-          alert(`Failed to upload ${file.name}`)
+          const errorData = await response.json()
+          setError(`Failed to upload ${file.name}: ${errorData.error}`)
         }
       } catch (error) {
         console.error("Upload error:", error)
-        alert(`Error uploading ${file.name}`)
+        setError(`Error uploading ${file.name}`)
       }
     }
   }
@@ -84,14 +88,16 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
+    setSuccess("")
 
     if (!selectedCategory) {
-      alert("Please select a visa category.")
+      setError("Please select a visa category.")
       return
     }
 
     if (uploadedFiles.length === 0) {
-      alert("Please upload at least one document.")
+      setError("Please upload at least one document.")
       return
     }
 
@@ -104,14 +110,18 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
           documents: uploadedFiles,
         }
 
+        console.log("Submitting application data:", applicationData)
+
         const response = await fetch("/api/visa-applications", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(applicationData),
         })
 
-        if (response.ok) {
-          alert("Application submitted successfully! We will contact you soon.")
+        const result = await response.json()
+
+        if (response.ok && result.success) {
+          setSuccess("Application submitted successfully! We will contact you soon.")
           // Reset form
           setFormData({
             applicantName: "",
@@ -126,11 +136,11 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
           })
           setUploadedFiles([])
         } else {
-          alert("Failed to submit application. Please try again.")
+          setError(result.error || "Failed to submit application. Please try again.")
         }
       } catch (error) {
         console.error("Submission error:", error)
-        alert("An error occurred. Please try again.")
+        setError("An error occurred while submitting your application. Please try again.")
       }
     })
   }
@@ -169,6 +179,22 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
             </p>
           </CardHeader>
           <CardContent>
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
+                <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+                <p className="text-red-700">{error}</p>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center">
+                <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                <p className="text-green-700">{success}</p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Visa Category Selection */}
               <div>

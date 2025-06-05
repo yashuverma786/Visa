@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -12,6 +12,45 @@ import TestimonialsManager from "./testimonials-manager"
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
+  const [stats, setStats] = useState({
+    countries: 0,
+    applications: 0,
+    customers: 0,
+    testimonials: 0,
+  })
+
+  useEffect(() => {
+    fetchStats()
+  }, [])
+
+  const fetchStats = async () => {
+    try {
+      // Fetch countries
+      const countriesRes = await fetch("/api/admin/countries")
+      const countries = countriesRes.ok ? await countriesRes.json() : []
+
+      // Fetch applications
+      const applicationsRes = await fetch("/api/admin/applications")
+      const applications = applicationsRes.ok ? await applicationsRes.json() : []
+
+      // Fetch customers (leads)
+      const customersRes = await fetch("/api/admin/leads")
+      const customers = customersRes.ok ? await customersRes.json() : []
+
+      // Fetch testimonials
+      const testimonialsRes = await fetch("/api/admin/testimonials")
+      const testimonials = testimonialsRes.ok ? await testimonialsRes.json() : []
+
+      setStats({
+        countries: countries.length,
+        applications: applications.length,
+        customers: customers.length,
+        testimonials: testimonials.length,
+      })
+    } catch (error) {
+      console.error("Error fetching stats:", error)
+    }
+  }
 
   const handleLogout = async () => {
     await fetch("/api/admin/logout", { method: "POST" })
@@ -53,7 +92,7 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="leads" className="flex items-center">
               <Users className="h-4 w-4 mr-2" />
-              Leads
+              Customers
             </TabsTrigger>
             <TabsTrigger value="testimonials" className="flex items-center">
               <MessageSquare className="h-4 w-4 mr-2" />
@@ -69,7 +108,7 @@ export default function AdminDashboard() {
                   <Globe className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">6</div>
+                  <div className="text-2xl font-bold">{stats.countries}</div>
                   <p className="text-xs text-muted-foreground">Active visa destinations</p>
                 </CardContent>
               </Card>
@@ -80,19 +119,19 @@ export default function AdminDashboard() {
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">Pending review</p>
+                  <div className="text-2xl font-bold">{stats.applications}</div>
+                  <p className="text-xs text-muted-foreground">Visa applications</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Leads</CardTitle>
+                  <CardTitle className="text-sm font-medium">Customers</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">New inquiries</p>
+                  <div className="text-2xl font-bold">{stats.customers}</div>
+                  <p className="text-xs text-muted-foreground">Customer inquiries</p>
                 </CardContent>
               </Card>
 
@@ -102,7 +141,7 @@ export default function AdminDashboard() {
                   <MessageSquare className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">2</div>
+                  <div className="text-2xl font-bold">{stats.testimonials}</div>
                   <p className="text-xs text-muted-foreground">Customer reviews</p>
                 </CardContent>
               </Card>
@@ -132,7 +171,7 @@ export default function AdminDashboard() {
                     className="flex items-center justify-center"
                   >
                     <Users className="h-4 w-4 mr-2" />
-                    Manage Leads
+                    Manage Customers
                   </Button>
                   <Button
                     onClick={() => setActiveTab("testimonials")}
