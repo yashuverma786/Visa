@@ -38,3 +38,5 @@ if (process.env.NODE_ENV === "development") {
 export async function connectToDatabase() {
   return clientPromise
 }
+
+export default clientPromise
