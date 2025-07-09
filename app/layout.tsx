@@ -78,6 +78,18 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#1e40af" />
         <meta name="google-site-verification" content="RyOar0-WtlBkeMoEuDi37XF__4yGYszled-AErjIx1Y" />
+        {/* Google tag (gtag.js) */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-79REK6VCFM"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-79REK6VCFM');
+          `,
+          }}
+        />
       </head>
       <body className={inter.className}>
         <ErrorBoundary>
