@@ -77,6 +77,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#1e40af" />
+        <meta name="google-site-verification" content="RyOar0-WtlBkeMoEuDi37XF__4yGYszled-AErjIx1Y" />
       </head>
       <body className={inter.className}>
         <ErrorBoundary>
