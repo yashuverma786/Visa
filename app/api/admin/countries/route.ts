@@ -1,72 +1,86 @@
-import { NextResponse } from "next/server"
-import { connectToDatabase } from "@/lib/mongodb"
-import type { Country } from "@/lib/types"
+import { type NextRequest, NextResponse } from "next/server"
+import { checkAdminAuth } from "@/lib/auth"
+import { getCountries, createCountry } from "@/lib/database"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { db } = await connectToDatabase()
-    const countries = await db.collection<Country>("countries").find({}).toArray()
+    console.log("🔍 Admin fetching countries...")
+
+    if (!checkAdminAuth(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const countries = await getCountries()
+    console.log(`✅ Returning ${countries.length} countries to admin`)
+
     return NextResponse.json(countries)
   } catch (error) {
-    console.error("Error fetching countries:", error)
-    return NextResponse.json({ message: "Failed to fetch countries", error }, { status: 500 })
+    console.error("❌ Error fetching countries for admin:", error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 },
+    )
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { db } = await connectToDatabase()
-    const countryData: Country = await req.json()
+    console.log("🆕 Admin creating new country...")
 
-    // Basic validation
-    if (!countryData.name || !countryData.code) {
-      return NextResponse.json({ message: "Country name and code are required" }, { status: 400 })
+    if (!checkAdminAuth(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const result = await db.collection<Country>("countries").insertOne({
-      ...countryData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    const data = await request.json()
+    console.log("Country data received:", {
+      name: data.name,
+      code: data.code,
+      categoriesCount: data.visaCategories?.length,
+      image: data.image ? "Image provided" : "No image",
     })
 
-    if (result.acknowledged) {
-      const newCountry = await db.collection<Country>("countries").findOne({ _id: result.insertedId })
-      return NextResponse.json(newCountry, { status: 201 })
-    } else {
-      return NextResponse.json({ message: "Failed to add country" }, { status: 500 })
+    // Validate required fields
+    if (!data.name || !data.code) {
+      return NextResponse.json({ error: "Name and code are required" }, { status: 400 })
     }
+
+    if (!data.visaCategories || data.visaCategories.length === 0) {
+      return NextResponse.json({ error: "At least one visa category is required" }, { status: 400 })
+    }
+
+    // Validate visa categories
+    for (let i = 0; i < data.visaCategories.length; i++) {
+      const category = data.visaCategories[i]
+      if (!category.name || !category.type || category.price === undefined || !category.processingTime) {
+        return NextResponse.json(
+          {
+            error: `Visa category ${i + 1} is missing required fields (name, type, price, processing time)`,
+          },
+          { status: 400 },
+        )
+      }
+
+      // Ensure price is a number
+      if (typeof category.price !== "number" || category.price < 0) {
+        return NextResponse.json({ error: `Invalid price for visa category ${i + 1}` }, { status: 400 })
+      }
+    }
+
+    // Set default image if none provided
+    if (!data.image) {
+      data.image = "/placeholder.svg?height=300&width=400"
+    }
+
+    const country = await createCountry(data)
+    console.log("✅ Country created successfully:", country._id)
+
+    return NextResponse.json(country, { status: 201 })
   } catch (error) {
-    console.error("Error adding country:", error)
-    return NextResponse.json({ message: "Failed to add country", error }, { status: 500 })
-  }
-}
+    console.error("❌ Error creating country:", error)
 
-export async function PUT(req: Request) {
-  try {
-    const { db } = await connectToDatabase()
-    const { _id, ...countryData }: Country = await req.json()
+    const errorMessage = error instanceof Error ? error.message : "Internal server error"
+    const statusCode = errorMessage.includes("already exists") ? 409 : 500
 
-    if (!_id) {
-      return NextResponse.json({ message: "Country ID is required for update" }, { status: 400 })
-    }
-
-    const result = await db
-      .collection<Country>("countries")
-      .updateOne(
-        { _id: new (await import("mongodb")).ObjectId(_id) },
-        { $set: { ...countryData, updatedAt: new Date() } },
-      )
-
-    if (result.matchedCount === 0) {
-      return NextResponse.json({ message: "Country not found" }, { status: 404 })
-    }
-
-    const updatedCountry = await db
-      .collection<Country>("countries")
-      .findOne({ _id: new (await import("mongodb")).ObjectId(_id) })
-    return NextResponse.json(updatedCountry, { status: 200 })
-  } catch (error) {
-    console.error("Error updating country:", error)
-    return NextResponse.json({ message: "Failed to update country", error }, { status: 500 })
+    return NextResponse.json({ error: errorMessage }, { status: statusCode })
   }
 }

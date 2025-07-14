@@ -42,7 +42,7 @@ export default function Header() {
           {/* CTA Button */}
           <div className="hidden md:flex">
             <Button asChild>
-              <a href="tel:9599076202" className="flex items-center">
+              <a href="tel:+919599076202" className="flex items-center">
                 <Phone className="h-4 w-4 mr-2" />
                 Get Started
               </a>
@@ -73,7 +73,7 @@ export default function Header() {
               ))}
               <div className="pt-2">
                 <Button asChild className="w-full">
-                  <a href="tel:9599076202" className="flex items-center justify-center">
+                  <a href="tel:+919599076202" className="flex items-center justify-center">
                     <Phone className="h-4 w-4 mr-2" />
                     Get Started
                   </a>
