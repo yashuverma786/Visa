@@ -77,71 +77,76 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview" className="flex items-center">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Overview
+          <TabsList className="grid w-full grid-cols-5 mb-8">
+            <TabsTrigger value="overview" className="flex items-center text-xs md:text-sm">
+              <BarChart3 className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Overview</span>
+              <span className="sm:hidden">Stats</span>
             </TabsTrigger>
-            <TabsTrigger value="countries" className="flex items-center">
-              <Globe className="h-4 w-4 mr-2" />
-              Countries
+            <TabsTrigger value="countries" className="flex items-center text-xs md:text-sm">
+              <Globe className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Countries</span>
+              <span className="sm:hidden">Places</span>
             </TabsTrigger>
-            <TabsTrigger value="applications" className="flex items-center">
-              <FileText className="h-4 w-4 mr-2" />
-              Applications
+            <TabsTrigger value="applications" className="flex items-center text-xs md:text-sm">
+              <FileText className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Applications</span>
+              <span className="sm:hidden">Apps</span>
             </TabsTrigger>
-            <TabsTrigger value="leads" className="flex items-center">
-              <Users className="h-4 w-4 mr-2" />
-              Customers
+            <TabsTrigger value="leads" className="flex items-center text-xs md:text-sm">
+              <Users className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Customers</span>
+              <span className="sm:hidden">Users</span>
             </TabsTrigger>
-            <TabsTrigger value="testimonials" className="flex items-center">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Testimonials
+            <TabsTrigger value="testimonials" className="flex items-center text-xs md:text-sm">
+              <MessageSquare className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Testimonials</span>
+              <span className="sm:hidden">Reviews</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card>
+              <Card className="">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Countries</CardTitle>
                   <Globe className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.countries}</div>
+                  <div className="text-2xl font-bold text-muted-foreground">{stats.countries}</div>
                   <p className="text-xs text-muted-foreground">Active visa destinations</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Applications</CardTitle>
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.applications}</div>
+                  <div className="text-2xl font-bold text-muted-foreground">{stats.applications}</div>
                   <p className="text-xs text-muted-foreground">Visa applications</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Customers</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.customers}</div>
+                  <div className="text-2xl font-bold text-muted-foreground">{stats.customers}</div>
                   <p className="text-xs text-muted-foreground">Customer inquiries</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Testimonials</CardTitle>
                   <MessageSquare className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.testimonials}</div>
+                  <div className="text-2xl font-bold text-muted-foreground">{stats.testimonials}</div>
                   <p className="text-xs text-muted-foreground">Customer reviews</p>
                 </CardContent>
               </Card>
@@ -160,7 +165,7 @@ export default function AdminDashboard() {
                   <Button
                     onClick={() => setActiveTab("applications")}
                     variant="outline"
-                    className="flex items-center justify-center"
+                    className="flex items-center justify-center hover:bg-gray-50"
                   >
                     <FileText className="h-4 w-4 mr-2" />
                     View Applications
@@ -168,7 +173,7 @@ export default function AdminDashboard() {
                   <Button
                     onClick={() => setActiveTab("leads")}
                     variant="outline"
-                    className="flex items-center justify-center"
+                    className="flex items-center justify-center hover:bg-gray-50"
                   >
                     <Users className="h-4 w-4 mr-2" />
                     Manage Customers
@@ -176,7 +181,7 @@ export default function AdminDashboard() {
                   <Button
                     onClick={() => setActiveTab("testimonials")}
                     variant="outline"
-                    className="flex items-center justify-center"
+                    className="flex items-center justify-center hover:bg-gray-50"
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Add Testimonial
