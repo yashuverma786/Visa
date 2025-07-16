@@ -246,8 +246,8 @@ export default function CountryVisaDetails({ country }: CountryVisaDetailsProps)
                     <p className="flex items-center">
                       <Phone className="h-4 w-4 mr-2 text-green-700" />
                       <strong>Phone:</strong>{" "}
-                      <a href="tel:+919599076202" className="ml-1 text-green-700 hover:underline">
-                        +91 9599076202
+                      <a href="tel:+919876543210" className="ml-1 text-green-700 hover:underline">
+                        +91 9876543210
                       </a>
                     </p>
                     <p className="flex items-center">
