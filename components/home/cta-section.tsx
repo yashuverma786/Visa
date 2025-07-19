@@ -45,10 +45,10 @@ export default function CTASection() {
             <h3 className="text-xl font-semibold mb-2">Call Us</h3>
             <p className="text-blue-100 mb-4">Speak directly with our visa experts</p>
             <a
-              href="tel:9599076202"
+              href="tel:+919599076202"
               className="font-semibold hover:text-blue-200 transition-colors inline-flex items-center"
             >
-              9599076202
+              95990 76202
               <ChevronRight className="ml-1 h-4 w-4" />
             </a>
           </div>
@@ -93,7 +93,7 @@ export default function CTASection() {
             asChild
             size="lg"
             variant="outline"
-            className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-blue-600 transition-all duration-300 hover:scale-105 bg-transparent"
+            className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-blue-600 transition-all duration-300 hover:scale-105"
           >
             <Link href="/countries">Browse Countries</Link>
           </Button>

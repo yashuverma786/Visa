@@ -1,5 +1,3 @@
-import type { ObjectId } from "mongodb"
-
 export interface Task {
   id: string
   title: string
@@ -24,7 +22,6 @@ export interface VisaCategory {
   name: string
   type: string // e.g., "Tourist", "Business", "Student", "Work", "Family"
   price: number
-  currency: string // e.g., "USD", "CAD", "AUD", "EUR", "INR"
   processingTime: string
   validity: string
   entries: "Single" | "Multiple"
@@ -36,54 +33,18 @@ export interface VisaCategory {
 }
 
 export interface Country {
-  _id?: string | ObjectId
+  _id?: string
   name: string
   code: string
-  slug: string // URL slug based on country name
-  flagEmoji?: string
-  visaFee?: string
-  currency?: string // Default currency for the country
-  processingTime?: string
-  description?: string
-  requirements?: string // General requirements
-  imageUrl?: string
-  visaTypes?: VisaType[] // Array of specific visa types for this country
-  generalDocuments?: string // General documents for the country
-  generalProcess?: string // General process for the country
+  image: string
+  description: string
+  visaCategories: VisaCategory[]
   createdAt?: Date
   updatedAt?: Date
 }
 
-export interface VisaType {
-  type: string // e.g., "Tourist Visa", "Business Visa"
-  price?: string
-  currency?: string // Currency for this specific visa type
-  processingTime?: string
-  validity?: string // e.g., "6 months", "1 year"
-  entryType?: string // e.g., "Single Entry", "Multiple Entry"
-  documents: string[] // List of required documents for this specific visa type
-  process: string[] // Step-by-step process for this specific visa type
-  eligibility: string[] // Eligibility criteria for this specific visa type
-}
-
-export interface Blog {
-  _id?: string | ObjectId
-  title: string
-  slug: string
-  content: string
-  excerpt: string
-  featuredImage?: string
-  images?: string[] // Additional images for the blog
-  author: string
-  tags: string[]
-  published: boolean
-  publishedAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
-
 export interface VisaApplication {
-  _id?: string | ObjectId
+  _id?: string
   applicantName: string
   email: string
   phone: string
@@ -109,26 +70,26 @@ export interface UploadedDocument {
 }
 
 export interface Testimonial {
-  _id?: string | ObjectId
-  customerName: string
+  _id?: string
+  name: string
   country: string
-  rating: number // 1-5
-  feedback: string
-  imageUrl?: string
+  rating: number
+  comment: string
+  image?: string
   createdAt?: Date
-  updatedAt?: Date
 }
 
 export interface LeadCapture {
-  _id?: string | ObjectId
+  _id?: string
   name: string
   email: string
   phone: string
-  placeToVisit?: string
-  visaType?: string
+  placeToVisit: string
   message?: string
-  source: "popup" | "hero" | "contact"
-  documents?: { name: string; url: string; type: string; size: number }[]
+  visaType?: string
+  country?: string
+  documents?: UploadedDocument[] // Add document support
+  source: "popup" | "hero" | "contact" | "form" | "visa-application"
   createdAt?: Date
 }
 
@@ -142,17 +103,4 @@ export interface PopupLead {
 export interface AdminUser {
   username: string
   password: string
-}
-
-export interface Application {
-  _id?: string | ObjectId
-  applicantName: string
-  email: string
-  phone: string
-  countryApplyingFor: string
-  visaType: string
-  status: "pending" | "approved" | "rejected" | "in-review"
-  submittedAt: Date
-  documents: { name: string; url: string; type: string; size: number }[]
-  notes?: string
 }

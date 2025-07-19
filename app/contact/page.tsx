@@ -79,8 +79,8 @@ export default function ContactPage() {
                             </a>
                           </p>
                           <p className="text-gray-600">
-                            <a href="tel:9599076202" className="hover:text-blue-600 transition-colors">
-                              9599076202
+                            <a href="tel:+919599076202" className="hover:text-blue-600 transition-colors">
+                              +91 9599076202
                             </a>
                           </p>
                           <p className="text-gray-600">
@@ -150,7 +150,7 @@ export default function ContactPage() {
                       Call Now
                     </a>
                   </Button>
-                  <Button asChild variant="outline" className="flex-1 bg-transparent">
+                  <Button asChild variant="outline" className="flex-1">
                     <a href="mailto:visa@journeymytrip.com">
                       <Mail className="h-4 w-4 mr-2" />
                       Send Email
