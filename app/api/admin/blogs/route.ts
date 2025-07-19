@@ -34,8 +34,11 @@ export async function POST(req: Request) {
       slug: blogData.slug || blogData.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       content: blogData.content,
       excerpt: blogData.excerpt || blogData.content.substring(0, 150) + "...",
+      metaTitle: blogData.metaTitle || blogData.title,
+      metaDescription: blogData.metaDescription || blogData.excerpt || blogData.content.substring(0, 160),
       featuredImage: blogData.featuredImage || "",
-      images: blogData.images || [],
+      featuredImageAlt: blogData.featuredImageAlt || "",
+      images: Array.isArray(blogData.images) ? blogData.images : [],
       author: blogData.author || "Admin",
       tags: Array.isArray(blogData.tags) ? blogData.tags : [],
       published: Boolean(blogData.published),
@@ -54,6 +57,9 @@ export async function POST(req: Request) {
     }
   } catch (error) {
     console.error("Error creating blog:", error)
-    return NextResponse.json({ message: "Failed to create blog", error }, { status: 500 })
+    return NextResponse.json(
+      { message: "Failed to create blog", error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 },
+    )
   }
 }

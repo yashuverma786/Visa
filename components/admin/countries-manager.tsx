@@ -27,6 +27,15 @@ const currencies = [
   { code: "AED", symbol: "د.إ", name: "UAE Dirham" },
 ]
 
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9 -]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim()
+}
+
 export default function CountriesManager() {
   const [countries, setCountries] = useState<Country[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -145,7 +154,10 @@ export default function CountriesManager() {
   const handleSaveCountry = async () => {
     if (!currentCountry) return
 
-    const countryWithVisaTypes = { ...currentCountry, visaTypes }
+    // Generate slug from country name if not provided
+    const slug = currentCountry.slug || generateSlug(currentCountry.name)
+    const countryWithSlug = { ...currentCountry, slug, visaTypes }
+
     const method = isEditing ? "PUT" : "POST"
     const url = isEditing ? `/api/admin/countries/${currentCountry._id}` : "/api/admin/countries"
 
@@ -155,7 +167,7 @@ export default function CountriesManager() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(countryWithVisaTypes),
+        body: JSON.stringify(countryWithSlug),
       })
 
       if (response.ok) {
@@ -301,7 +313,8 @@ export default function CountriesManager() {
   const filteredCountries = countries.filter(
     (country) =>
       country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      country.code.toLowerCase().includes(searchTerm.toLowerCase()),
+      country.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (country.slug && country.slug.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
   if (isLoading) {
@@ -368,7 +381,7 @@ export default function CountriesManager() {
                 <AlertCircle className="h-4 w-4 mr-1 text-orange-500" />
                 <span>Processing: {country.processingTime || "N/A"}</span>
               </div>
-              <div className="text-xs text-gray-400">URL: /countries/{country.slug}</div>
+              <div className="text-xs text-gray-400">URL: /countries/{country.slug || generateSlug(country.name)}</div>
             </CardContent>
           </Card>
         ))}
@@ -415,8 +428,10 @@ export default function CountriesManager() {
                         onChange={(e) => setCurrentCountry({ ...currentCountry, slug: e.target.value })}
                         placeholder="e.g., uk, ch, usa"
                       />
-                      {currentCountry.slug && (
-                        <p className="text-xs text-gray-500 mt-1">URL will be: /countries/{currentCountry.slug}</p>
+                      {currentCountry.name && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          URL will be: /countries/{currentCountry.slug || generateSlug(currentCountry.name)}
+                        </p>
                       )}
                     </div>
                   </div>

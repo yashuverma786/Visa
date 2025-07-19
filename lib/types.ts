@@ -72,7 +72,10 @@ export interface Blog {
   slug: string
   content: string
   excerpt: string
+  metaTitle?: string // SEO meta title
+  metaDescription?: string // SEO meta description
   featuredImage?: string
+  featuredImageAlt?: string // ALT text for featured image
   images?: string[] // Additional images for the blog
   author: string
   tags: string[]

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -11,9 +10,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash, Search, RefreshCw, X } from "lucide-react"
+import { Plus, Edit, Trash, Search, RefreshCw, X, Eye, EyeOff, Calendar, User } from "lucide-react"
 import type { Blog } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 function generateSlug(title: string): string {
   return title
@@ -74,7 +74,10 @@ export default function BlogsManager() {
       slug: "",
       content: "",
       excerpt: "",
+      metaTitle: "",
+      metaDescription: "",
       featuredImage: "",
+      featuredImageAlt: "",
       images: [],
       author: "Admin",
       tags: [],
@@ -172,6 +175,8 @@ export default function BlogsManager() {
       slug,
       tags,
       excerpt: currentBlog.excerpt || currentBlog.content.substring(0, 150) + "...",
+      metaTitle: currentBlog.metaTitle || currentBlog.title,
+      metaDescription: currentBlog.metaDescription || currentBlog.excerpt || currentBlog.content.substring(0, 160),
       updatedAt: new Date(),
       publishedAt: currentBlog.published ? currentBlog.publishedAt || new Date() : undefined,
     }
@@ -264,6 +269,7 @@ export default function BlogsManager() {
   const filteredBlogs = blogs.filter(
     (blog) =>
       blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      blog.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
       blog.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
@@ -305,17 +311,24 @@ export default function BlogsManager() {
                   {blog.featuredImage && (
                     <img
                       src={blog.featuredImage || "/placeholder.svg"}
-                      alt={blog.title}
+                      alt={blog.featuredImageAlt || blog.title}
                       className="w-full h-32 object-cover rounded-md mb-3"
                     />
                   )}
-                  <h3 className="text-lg font-semibold mb-2 line-clamp-2">{blog.title}</h3>
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{blog.excerpt}</p>
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant={blog.published ? "default" : "secondary"}>
+                      {blog.published ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
                       {blog.published ? "Published" : "Draft"}
                     </Badge>
                     <span className="text-xs text-gray-500">{new Date(blog.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2 line-clamp-2">{blog.title}</h3>
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{blog.excerpt}</p>
+                  <div className="flex items-center text-xs text-gray-500 mb-2">
+                    <User className="h-3 w-3 mr-1" />
+                    <span className="mr-3">{blog.author}</span>
+                    <Calendar className="h-3 w-3 mr-1" />
+                    <span>{new Date(blog.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="flex flex-wrap gap-1 mb-3">
                     {blog.tags.slice(0, 3).map((tag, index) => (
@@ -329,6 +342,7 @@ export default function BlogsManager() {
                       </Badge>
                     )}
                   </div>
+                  <div className="text-xs text-gray-400 mb-3">URL: /blogs/{blog.slug || generateSlug(blog.title)}</div>
                 </div>
               </div>
               <div className="flex space-x-2">
@@ -347,7 +361,6 @@ export default function BlogsManager() {
 
       {filteredBlogs.length === 0 && (
         <div className="text-center py-12">
-          <div className="h-12 w-12 text-gray-400 mx-auto mb-4"></div>
           <p className="text-gray-500">No blogs found matching your criteria.</p>
         </div>
       )}
@@ -357,118 +370,185 @@ export default function BlogsManager() {
         {currentBlog && (
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{isEditing ? "Edit Blog" : "Add New Blog"}</DialogTitle>
+              <DialogTitle>{isEditing ? "Edit Blog" : "Create New Blog"}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={currentBlog.title}
-                    onChange={(e) => {
-                      const title = e.target.value
-                      setCurrentBlog({
-                        ...currentBlog,
-                        title,
-                        slug: generateSlug(title),
-                      })
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="slug">URL Slug</Label>
-                  <Input
-                    id="slug"
-                    value={currentBlog.slug}
-                    onChange={(e) => setCurrentBlog({ ...currentBlog, slug: e.target.value })}
-                    placeholder="auto-generated-from-title"
-                  />
-                </div>
-              </div>
+              <Tabs defaultValue="content">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="content">Content</TabsTrigger>
+                  <TabsTrigger value="seo">SEO & Meta</TabsTrigger>
+                  <TabsTrigger value="media">Media</TabsTrigger>
+                </TabsList>
 
-              <div>
-                <Label htmlFor="excerpt">Excerpt</Label>
-                <Textarea
-                  id="excerpt"
-                  value={currentBlog.excerpt}
-                  onChange={(e) => setCurrentBlog({ ...currentBlog, excerpt: e.target.value })}
-                  rows={3}
-                  placeholder="Brief description of the blog post..."
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="content">Content</Label>
-                <Textarea
-                  id="content"
-                  value={currentBlog.content}
-                  onChange={(e) => setCurrentBlog({ ...currentBlog, content: e.target.value })}
-                  rows={10}
-                  placeholder="Write your blog content here..."
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="author">Author</Label>
-                  <Input
-                    id="author"
-                    value={currentBlog.author}
-                    onChange={(e) => setCurrentBlog({ ...currentBlog, author: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="tags">Tags (comma-separated)</Label>
-                  <Input
-                    id="tags"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    placeholder="travel, visa, tips"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="featuredImage">Featured Image</Label>
-                <Input
-                  id="featuredImage"
-                  type="file"
-                  onChange={handleImageUpload}
-                  disabled={uploadingImage}
-                  accept="image/*"
-                />
-                {uploadingImage && <p className="text-sm text-gray-500 mt-2">Uploading image...</p>}
-                {imagePreview && (
-                  <div className="mt-4 relative w-full max-w-md">
-                    <img
-                      src={imagePreview || "/placeholder.svg"}
-                      alt="Featured Image Preview"
-                      className="w-full h-48 object-cover rounded-md"
-                    />
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                      onClick={() => {
-                        setImagePreview(null)
-                        setCurrentBlog((prev) => (prev ? { ...prev, featuredImage: "" } : null))
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                <TabsContent value="content" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="title">Title</Label>
+                      <Input
+                        id="title"
+                        value={currentBlog.title}
+                        onChange={(e) => {
+                          const title = e.target.value
+                          setCurrentBlog({
+                            ...currentBlog,
+                            title,
+                            slug: generateSlug(title),
+                          })
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="slug">URL Slug</Label>
+                      <Input
+                        id="slug"
+                        value={currentBlog.slug}
+                        onChange={(e) => setCurrentBlog({ ...currentBlog, slug: e.target.value })}
+                        placeholder="auto-generated-from-title"
+                      />
+                    </div>
                   </div>
-                )}
-              </div>
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="published"
-                  checked={currentBlog.published}
-                  onCheckedChange={(checked) => setCurrentBlog({ ...currentBlog, published: checked })}
-                />
-                <Label htmlFor="published">Publish immediately</Label>
-              </div>
+                  <div>
+                    <Label htmlFor="excerpt">Excerpt</Label>
+                    <Textarea
+                      id="excerpt"
+                      value={currentBlog.excerpt}
+                      onChange={(e) => setCurrentBlog({ ...currentBlog, excerpt: e.target.value })}
+                      rows={3}
+                      placeholder="Brief description of the blog post..."
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="content">Content</Label>
+                    <Textarea
+                      id="content"
+                      value={currentBlog.content}
+                      onChange={(e) => setCurrentBlog({ ...currentBlog, content: e.target.value })}
+                      rows={12}
+                      placeholder="Write your blog content here..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="author">Author</Label>
+                      <Input
+                        id="author"
+                        value={currentBlog.author}
+                        onChange={(e) => setCurrentBlog({ ...currentBlog, author: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="tags">Tags (comma-separated)</Label>
+                      <Input
+                        id="tags"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        placeholder="travel, visa, tips"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="published"
+                      checked={currentBlog.published}
+                      onCheckedChange={(checked) => setCurrentBlog({ ...currentBlog, published: checked })}
+                    />
+                    <Label htmlFor="published">Publish immediately</Label>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="seo" className="space-y-4">
+                  <div>
+                    <Label htmlFor="metaTitle">Meta Title (SEO)</Label>
+                    <Input
+                      id="metaTitle"
+                      value={currentBlog.metaTitle || ""}
+                      onChange={(e) => setCurrentBlog({ ...currentBlog, metaTitle: e.target.value })}
+                      placeholder="SEO optimized title (60 characters max)"
+                      maxLength={60}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">{(currentBlog.metaTitle || "").length}/60 characters</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="metaDescription">Meta Description (SEO)</Label>
+                    <Textarea
+                      id="metaDescription"
+                      value={currentBlog.metaDescription || ""}
+                      onChange={(e) => setCurrentBlog({ ...currentBlog, metaDescription: e.target.value })}
+                      rows={3}
+                      placeholder="SEO meta description (160 characters max)"
+                      maxLength={160}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {(currentBlog.metaDescription || "").length}/160 characters
+                    </p>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-2">Search Preview</h4>
+                    <div className="text-blue-600 text-lg hover:underline cursor-pointer">
+                      {currentBlog.metaTitle || currentBlog.title || "Blog Title"}
+                    </div>
+                    <div className="text-green-700 text-sm">visaa.in/blogs/{currentBlog.slug || "blog-slug"}</div>
+                    <div className="text-gray-600 text-sm mt-1">
+                      {currentBlog.metaDescription || currentBlog.excerpt || "Blog description will appear here..."}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="media" className="space-y-4">
+                  <div>
+                    <Label htmlFor="featuredImage">Featured Image</Label>
+                    <Input
+                      id="featuredImage"
+                      type="file"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      accept="image/*"
+                    />
+                    {uploadingImage && <p className="text-sm text-gray-500 mt-2">Uploading image...</p>}
+                    {imagePreview && (
+                      <div className="mt-4 relative w-full max-w-md">
+                        <img
+                          src={imagePreview || "/placeholder.svg"}
+                          alt="Featured Image Preview"
+                          className="w-full h-48 object-cover rounded-md"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                          onClick={() => {
+                            setImagePreview(null)
+                            setCurrentBlog((prev) => (prev ? { ...prev, featuredImage: "" } : null))
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {imagePreview && (
+                    <div>
+                      <Label htmlFor="featuredImageAlt">Featured Image ALT Text (SEO)</Label>
+                      <Input
+                        id="featuredImageAlt"
+                        value={currentBlog.featuredImageAlt || ""}
+                        onChange={(e) => setCurrentBlog({ ...currentBlog, featuredImageAlt: e.target.value })}
+                        placeholder="Describe the image for accessibility and SEO"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        ALT text helps with accessibility and SEO. Describe what's in the image.
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
