@@ -1,23 +1,39 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Globe, FileText, Users, MessageSquare, Plus, LogOut, BarChart3 } from "lucide-react"
-import CountriesManager from "./countries-manager"
+import { Badge } from "@/components/ui/badge"
+import { Users, FileText, Globe, MessageSquare, TrendingUp, Calendar, BookOpen } from "lucide-react"
 import ApplicationsManager from "./applications-manager"
-import LeadsManager from "./leads-manager"
+import CountriesManager from "./countries-manager"
 import TestimonialsManager from "./testimonials-manager"
+import LeadsManager from "./leads-manager"
+import BlogsManager from "./blogs-manager"
+
+interface DashboardStats {
+  totalApplications: number
+  totalCountries: number
+  totalTestimonials: number
+  totalLeads: number
+  totalBlogs: number
+  publishedBlogs: number
+  recentApplications: number
+  pendingApplications: number
+}
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("overview")
-  const [stats, setStats] = useState({
-    countries: 0,
-    applications: 0,
-    customers: 0,
-    testimonials: 0,
+  const [stats, setStats] = useState<DashboardStats>({
+    totalApplications: 0,
+    totalCountries: 0,
+    totalTestimonials: 0,
+    totalLeads: 0,
+    totalBlogs: 0,
+    publishedBlogs: 0,
+    recentApplications: 0,
+    pendingApplications: 0,
   })
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     fetchStats()
@@ -25,184 +41,186 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      // Fetch countries
-      const countriesRes = await fetch("/api/admin/countries")
-      const countries = countriesRes.ok ? await countriesRes.json() : []
+      setIsLoading(true)
 
-      // Fetch applications
-      const applicationsRes = await fetch("/api/admin/applications")
-      const applications = applicationsRes.ok ? await applicationsRes.json() : []
+      // Fetch all stats in parallel
+      const [applicationsRes, countriesRes, testimonialsRes, leadsRes, blogsRes] = await Promise.all([
+        fetch("/api/admin/applications"),
+        fetch("/api/admin/countries"),
+        fetch("/api/admin/testimonials"),
+        fetch("/api/admin/leads"),
+        fetch("/api/admin/blogs"),
+      ])
 
-      // Fetch customers (leads)
-      const customersRes = await fetch("/api/admin/leads")
-      const customers = customersRes.ok ? await customersRes.json() : []
+      const [applications, countries, testimonials, leads, blogs] = await Promise.all([
+        applicationsRes.ok ? applicationsRes.json() : [],
+        countriesRes.ok ? countriesRes.json() : [],
+        testimonialsRes.ok ? testimonialsRes.json() : [],
+        leadsRes.ok ? leadsRes.json() : [],
+        blogsRes.ok ? blogsRes.json() : [],
+      ])
 
-      // Fetch testimonials
-      const testimonialsRes = await fetch("/api/admin/testimonials")
-      const testimonials = testimonialsRes.ok ? await testimonialsRes.json() : []
+      // Calculate stats
+      const now = new Date()
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+
+      const recentApplications = applications.filter((app: any) => new Date(app.submittedAt) >= sevenDaysAgo).length
+
+      const pendingApplications = applications.filter((app: any) => app.status === "pending").length
+
+      const publishedBlogs = blogs.filter((blog: any) => blog.published).length
 
       setStats({
-        countries: countries.length,
-        applications: applications.length,
-        customers: customers.length,
-        testimonials: testimonials.length,
+        totalApplications: applications.length,
+        totalCountries: countries.length,
+        totalTestimonials: testimonials.length,
+        totalLeads: leads.length,
+        totalBlogs: blogs.length,
+        publishedBlogs,
+        recentApplications,
+        pendingApplications,
       })
     } catch (error) {
       console.error("Error fetching stats:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleLogout = async () => {
-    await fetch("/api/admin/logout", { method: "POST" })
-    window.location.href = "/admin-console"
+  if (isLoading) {
+    return <div className="text-center py-8">Loading dashboard...</div>
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Globe className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-xl font-bold text-gray-900">JMT Travel Admin</h1>
-            </div>
-            <Button variant="outline" onClick={handleLogout} className="flex items-center">
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <p className="text-gray-600">Manage your visa application system</p>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview" className="flex items-center">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="countries" className="flex items-center">
-              <Globe className="h-4 w-4 mr-2" />
-              Countries
-            </TabsTrigger>
-            <TabsTrigger value="applications" className="flex items-center">
-              <FileText className="h-4 w-4 mr-2" />
-              Applications
-            </TabsTrigger>
-            <TabsTrigger value="leads" className="flex items-center">
-              <Users className="h-4 w-4 mr-2" />
-              Customers
-            </TabsTrigger>
-            <TabsTrigger value="testimonials" className="flex items-center">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Testimonials
-            </TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="countries">Countries</TabsTrigger>
+          <TabsTrigger value="applications">Applications</TabsTrigger>
+          <TabsTrigger value="customers">Customers</TabsTrigger>
+          <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
+          <TabsTrigger value="blogs">Blogs</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="overview" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Countries</CardTitle>
-                  <Globe className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.countries}</div>
-                  <p className="text-xs text-muted-foreground">Active visa destinations</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Applications</CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.applications}</div>
-                  <p className="text-xs text-muted-foreground">Visa applications</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Customers</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.customers}</div>
-                  <p className="text-xs text-muted-foreground">Customer inquiries</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Testimonials</CardTitle>
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.testimonials}</div>
-                  <p className="text-xs text-muted-foreground">Customer reviews</p>
-                </CardContent>
-              </Card>
-            </div>
-
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Button onClick={() => setActiveTab("countries")} className="flex items-center justify-center">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Country
-                  </Button>
-                  <Button
-                    onClick={() => setActiveTab("applications")}
-                    variant="outline"
-                    className="flex items-center justify-center"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    View Applications
-                  </Button>
-                  <Button
-                    onClick={() => setActiveTab("leads")}
-                    variant="outline"
-                    className="flex items-center justify-center"
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    Manage Customers
-                  </Button>
-                  <Button
-                    onClick={() => setActiveTab("testimonials")}
-                    variant="outline"
-                    className="flex items-center justify-center"
-                  >
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Add Testimonial
-                  </Button>
-                </div>
+                <div className="text-2xl font-bold">{stats.totalApplications}</div>
+                <p className="text-xs text-muted-foreground">
+                  <Badge variant="secondary" className="mr-1">
+                    {stats.pendingApplications}
+                  </Badge>
+                  pending review
+                </p>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="countries" className="mt-6">
-            <CountriesManager />
-          </TabsContent>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Countries</CardTitle>
+                <Globe className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalCountries}</div>
+                <p className="text-xs text-muted-foreground">visa destinations available</p>
+              </CardContent>
+            </Card>
 
-          <TabsContent value="applications" className="mt-6">
-            <ApplicationsManager />
-          </TabsContent>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Customer Leads</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalLeads}</div>
+                <p className="text-xs text-muted-foreground">potential customers</p>
+              </CardContent>
+            </Card>
 
-          <TabsContent value="leads" className="mt-6">
-            <LeadsManager />
-          </TabsContent>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Testimonials</CardTitle>
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalTestimonials}</div>
+                <p className="text-xs text-muted-foreground">customer reviews</p>
+              </CardContent>
+            </Card>
+          </div>
 
-          <TabsContent value="testimonials" className="mt-6">
-            <TestimonialsManager />
-          </TabsContent>
-        </Tabs>
-      </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.recentApplications}</div>
+                <p className="text-xs text-muted-foreground">applications in last 7 days</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Blog Posts</CardTitle>
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalBlogs}</div>
+                <p className="text-xs text-muted-foreground">
+                  <Badge variant="default" className="mr-1">
+                    {stats.publishedBlogs}
+                  </Badge>
+                  published
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">System Status</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">Online</div>
+                <p className="text-xs text-muted-foreground">all systems operational</p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="countries">
+          <CountriesManager />
+        </TabsContent>
+
+        <TabsContent value="applications">
+          <ApplicationsManager />
+        </TabsContent>
+
+        <TabsContent value="customers">
+          <LeadsManager />
+        </TabsContent>
+
+        <TabsContent value="testimonials">
+          <TestimonialsManager />
+        </TabsContent>
+
+        <TabsContent value="blogs">
+          <BlogsManager />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
