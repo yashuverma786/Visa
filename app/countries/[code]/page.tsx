@@ -5,14 +5,14 @@ import VisaApplicationForm from "@/components/countries/visa-application-form"
 import { sampleCountries } from "@/lib/seed-data"
 
 interface CountryPageProps {
-  params: Promise<{ code: string }>
+  params: Promise<{ slug: string }>
 }
 
-async function getCountryByCode(code: string) {
+async function getCountryBySlug(slug: string) {
   try {
-    // Try to fetch from database via API
+    // Try to fetch from database via API using slug
     const baseUrl = process.env.NEXT_PUBLIC_DOMAIN || "http://localhost:3000"
-    const response = await fetch(`${baseUrl}/api/countries/${code}`, {
+    const response = await fetch(`${baseUrl}/api/countries/slug/${slug}`, {
       cache: "no-store",
     })
 
@@ -24,12 +24,19 @@ async function getCountryByCode(code: string) {
     console.error("Error fetching country from API:", error)
   }
 
-  // Fallback to sample data
-  const sampleCountry = sampleCountries.find((c) => c.code === code.toUpperCase())
+  // Fallback to sample data by matching slug
+  const sampleCountry = sampleCountries.find(
+    (c) =>
+      c.name
+        .toLowerCase()
+        .replace(/[^a-z0-9 -]/g, "")
+        .replace(/\s+/g, "-") === slug,
+  )
   if (sampleCountry) {
     return {
       ...sampleCountry,
-      _id: `sample_${code}`,
+      _id: `sample_${slug}`,
+      slug: slug,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -39,8 +46,8 @@ async function getCountryByCode(code: string) {
 }
 
 export async function generateMetadata({ params }: CountryPageProps): Promise<Metadata> {
-  const { code } = await params
-  const country = await getCountryByCode(code)
+  const { slug } = await params
+  const country = await getCountryBySlug(slug)
 
   if (!country) {
     return {
@@ -55,8 +62,8 @@ export async function generateMetadata({ params }: CountryPageProps): Promise<Me
 }
 
 export default async function CountryPage({ params }: CountryPageProps) {
-  const { code } = await params
-  const country = await getCountryByCode(code)
+  const { slug } = await params
+  const country = await getCountryBySlug(slug)
 
   if (!country) {
     notFound()
@@ -71,8 +78,11 @@ export default async function CountryPage({ params }: CountryPageProps) {
 }
 
 export async function generateStaticParams() {
-  // Generate static params for sample countries
+  // Generate static params for sample countries using slugs
   return sampleCountries.map((country) => ({
-    code: country.code.toLowerCase(),
+    slug: country.name
+      .toLowerCase()
+      .replace(/[^a-z0-9 -]/g, "")
+      .replace(/\s+/g, "-"),
   }))
 }

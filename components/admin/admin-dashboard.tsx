@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Globe, FileText, Users, MessageSquare, Plus, LogOut, BarChart3 } from "lucide-react"
+import { Globe, FileText, Users, MessageSquare, Plus, LogOut, BarChart3, BookOpen } from "lucide-react"
 import CountriesManager from "./countries-manager"
 import ApplicationsManager from "./applications-manager"
 import LeadsManager from "./leads-manager"
 import TestimonialsManager from "./testimonials-manager"
+import BlogsManager from "./blogs-manager"
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
@@ -17,6 +18,7 @@ export default function AdminDashboard() {
     applications: 0,
     customers: 0,
     testimonials: 0,
+    blogs: 0,
   })
 
   useEffect(() => {
@@ -41,11 +43,16 @@ export default function AdminDashboard() {
       const testimonialsRes = await fetch("/api/admin/testimonials")
       const testimonials = testimonialsRes.ok ? await testimonialsRes.json() : []
 
+      // Fetch blogs
+      const blogsRes = await fetch("/api/admin/blogs")
+      const blogs = blogsRes.ok ? await blogsRes.json() : []
+
       setStats({
         countries: countries.length,
         applications: applications.length,
         customers: customers.length,
         testimonials: testimonials.length,
+        blogs: blogs.length,
       })
     } catch (error) {
       console.error("Error fetching stats:", error)
@@ -67,7 +74,7 @@ export default function AdminDashboard() {
               <Globe className="h-8 w-8 text-blue-600 mr-3" />
               <h1 className="text-xl font-bold text-gray-900">JMT Travel Admin</h1>
             </div>
-            <Button variant="outline" onClick={handleLogout} className="flex items-center">
+            <Button variant="outline" onClick={handleLogout} className="flex items-center bg-transparent">
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
@@ -77,7 +84,7 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview" className="flex items-center">
               <BarChart3 className="h-4 w-4 mr-2" />
               Overview
@@ -98,10 +105,14 @@ export default function AdminDashboard() {
               <MessageSquare className="h-4 w-4 mr-2" />
               Testimonials
             </TabsTrigger>
+            <TabsTrigger value="blogs" className="flex items-center">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Blogs
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Countries</CardTitle>
@@ -145,6 +156,17 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">Customer reviews</p>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Blogs</CardTitle>
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.blogs}</div>
+                  <p className="text-xs text-muted-foreground">Published articles</p>
+                </CardContent>
+              </Card>
             </div>
 
             <Card>
@@ -152,7 +174,7 @@ export default function AdminDashboard() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                   <Button onClick={() => setActiveTab("countries")} className="flex items-center justify-center">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Country
@@ -181,6 +203,14 @@ export default function AdminDashboard() {
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Add Testimonial
                   </Button>
+                  <Button
+                    onClick={() => setActiveTab("blogs")}
+                    variant="outline"
+                    className="flex items-center justify-center"
+                  >
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Write Blog
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -200,6 +230,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="testimonials" className="mt-6">
             <TestimonialsManager />
+          </TabsContent>
+
+          <TabsContent value="blogs" className="mt-6">
+            <BlogsManager />
           </TabsContent>
         </Tabs>
       </div>
