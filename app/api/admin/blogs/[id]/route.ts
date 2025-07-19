@@ -1,87 +1,75 @@
-import { NextResponse } from "next/server"
-import { checkAdminAuth } from "@/lib/auth"
+import { type NextRequest, NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
-import type { Blog } from "@/lib/types"
 
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    if (!checkAdminAuth(req)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const { id } = await params
-    const { db } = await connectToDatabase()
-    const blogData: Blog = await req.json()
+    const body = await request.json()
+    const { id } = params
 
     if (!ObjectId.isValid(id)) {
-      return NextResponse.json({ message: "Invalid blog ID" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid blog ID" }, { status: 400 })
     }
 
-    // Basic validation
-    if (!blogData.title || !blogData.content) {
-      return NextResponse.json({ message: "Title and content are required" }, { status: 400 })
+    // Validation
+    if (!body.title || !body.content || !body.author) {
+      return NextResponse.json({ error: "Title, content, and author are required" }, { status: 400 })
+    }
+
+    const client = await connectToDatabase()
+    const db = client.db("jmt_travel")
+
+    // Check if slug already exists (excluding current blog)
+    if (body.slug) {
+      const existingBlog = await db.collection("blogs").findOne({
+        slug: body.slug,
+        _id: { $ne: new ObjectId(id) },
+      })
+      if (existingBlog) {
+        return NextResponse.json({ error: "A blog with this slug already exists" }, { status: 400 })
+      }
     }
 
     const updateData = {
-      title: blogData.title,
-      slug: blogData.slug,
-      content: blogData.content,
-      excerpt: blogData.excerpt,
-      metaTitle: blogData.metaTitle || blogData.title,
-      metaDescription: blogData.metaDescription || blogData.excerpt,
-      featuredImage: blogData.featuredImage || "",
-      featuredImageAlt: blogData.featuredImageAlt || "",
-      images: Array.isArray(blogData.images) ? blogData.images : [],
-      author: blogData.author,
-      tags: Array.isArray(blogData.tags) ? blogData.tags : [],
-      published: Boolean(blogData.published),
-      publishedAt: blogData.published ? blogData.publishedAt || new Date() : undefined,
+      ...body,
       updatedAt: new Date(),
+      publishedAt: body.published && !body.publishedAt ? new Date() : body.publishedAt,
     }
 
-    const result = await db.collection<Blog>("blogs").updateOne({ _id: new ObjectId(id) }, { $set: updateData })
+    const result = await db.collection("blogs").updateOne({ _id: new ObjectId(id) }, { $set: updateData })
 
     if (result.matchedCount === 0) {
-      return NextResponse.json({ message: "Blog not found" }, { status: 404 })
+      return NextResponse.json({ error: "Blog not found" }, { status: 404 })
     }
 
-    const updatedBlog = await db.collection<Blog>("blogs").findOne({ _id: new ObjectId(id) })
-    return NextResponse.json(updatedBlog, { status: 200 })
+    const updatedBlog = await db.collection("blogs").findOne({ _id: new ObjectId(id) })
+    return NextResponse.json(updatedBlog)
   } catch (error) {
     console.error("Error updating blog:", error)
-    return NextResponse.json(
-      { message: "Failed to update blog", error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to update blog" }, { status: 500 })
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    if (!checkAdminAuth(req)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const { id } = await params
-    const { db } = await connectToDatabase()
+    const { id } = params
 
     if (!ObjectId.isValid(id)) {
-      return NextResponse.json({ message: "Invalid blog ID" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid blog ID" }, { status: 400 })
     }
 
-    const result = await db.collection<Blog>("blogs").deleteOne({ _id: new ObjectId(id) })
+    const client = await connectToDatabase()
+    const db = client.db("jmt_travel")
+
+    const result = await db.collection("blogs").deleteOne({ _id: new ObjectId(id) })
 
     if (result.deletedCount === 0) {
-      return NextResponse.json({ message: "Blog not found" }, { status: 404 })
+      return NextResponse.json({ error: "Blog not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ message: "Blog deleted successfully" }, { status: 200 })
+    return NextResponse.json({ message: "Blog deleted successfully" })
   } catch (error) {
     console.error("Error deleting blog:", error)
-    return NextResponse.json(
-      { message: "Failed to delete blog", error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to delete blog" }, { status: 500 })
   }
 }

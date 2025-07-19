@@ -1,19 +1,20 @@
 "use client"
 
 import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash, Search, RefreshCw, X, Eye, EyeOff, Calendar, User } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Plus, Edit, Trash, Search, RefreshCw, Calendar, User, X } from "lucide-react"
 import type { Blog } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 function generateSlug(title: string): string {
   return title
@@ -22,6 +23,12 @@ function generateSlug(title: string): string {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .trim()
+}
+
+function calculateReadTime(content: string): number {
+  const wordsPerMinute = 200
+  const wordCount = content.split(/\s+/).length
+  return Math.ceil(wordCount / wordsPerMinute)
 }
 
 export default function BlogsManager() {
@@ -70,17 +77,17 @@ export default function BlogsManager() {
 
   const handleAddBlog = () => {
     setCurrentBlog({
+      _id: "",
       title: "",
       slug: "",
       content: "",
       excerpt: "",
-      metaTitle: "",
-      metaDescription: "",
       featuredImage: "",
       featuredImageAlt: "",
-      images: [],
-      author: "Admin",
+      metaTitle: "",
+      metaDescription: "",
       tags: [],
+      author: "",
       published: false,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -146,7 +153,7 @@ export default function BlogsManager() {
     if (!currentBlog.title.trim()) {
       toast({
         title: "Validation Error",
-        description: "Title is required.",
+        description: "Blog title is required.",
         variant: "destructive",
       })
       return
@@ -155,13 +162,22 @@ export default function BlogsManager() {
     if (!currentBlog.content.trim()) {
       toast({
         title: "Validation Error",
-        description: "Content is required.",
+        description: "Blog content is required.",
         variant: "destructive",
       })
       return
     }
 
-    // Generate slug from title if not provided
+    if (!currentBlog.author.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Author name is required.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Generate slug if not provided
     const slug = currentBlog.slug || generateSlug(currentBlog.title)
 
     // Process tags
@@ -170,15 +186,25 @@ export default function BlogsManager() {
       .map((tag) => tag.trim())
       .filter((tag) => tag.length > 0)
 
+    // Auto-generate meta fields if not provided
+    const metaTitle = currentBlog.metaTitle || currentBlog.title
+    const metaDescription =
+      currentBlog.metaDescription ||
+      currentBlog.excerpt ||
+      currentBlog.content.substring(0, 160).replace(/<[^>]*>/g, "")
+
+    // Calculate read time
+    const readTime = calculateReadTime(currentBlog.content)
+
     const blogData = {
       ...currentBlog,
       slug,
       tags,
-      excerpt: currentBlog.excerpt || currentBlog.content.substring(0, 150) + "...",
-      metaTitle: currentBlog.metaTitle || currentBlog.title,
-      metaDescription: currentBlog.metaDescription || currentBlog.excerpt || currentBlog.content.substring(0, 160),
+      metaTitle,
+      metaDescription,
+      readTime,
       updatedAt: new Date(),
-      publishedAt: currentBlog.published ? currentBlog.publishedAt || new Date() : undefined,
+      publishedAt: currentBlog.published && !isEditing ? new Date() : currentBlog.publishedAt,
     }
 
     const method = isEditing ? "PUT" : "POST"
@@ -206,11 +232,11 @@ export default function BlogsManager() {
         })
         setIsDialogOpen(false)
       } else {
-        const errorData = await response.text()
+        const errorData = await response.json()
         console.error("Failed to save blog:", errorData)
         toast({
           title: "Error",
-          description: `Failed to ${isEditing ? "update" : "create"} blog.`,
+          description: errorData.error || `Failed to ${isEditing ? "update" : "create"} blog.`,
           variant: "destructive",
         })
       }
@@ -280,7 +306,7 @@ export default function BlogsManager() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Blogs Management</h2>
+        <h2 className="text-2xl font-bold">Blog Management</h2>
         <div className="flex items-center space-x-4">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -305,55 +331,57 @@ export default function BlogsManager() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredBlogs.map((blog) => (
           <Card key={blog._id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  {blog.featuredImage && (
-                    <img
-                      src={blog.featuredImage || "/placeholder.svg"}
-                      alt={blog.featuredImageAlt || blog.title}
-                      className="w-full h-32 object-cover rounded-md mb-3"
-                    />
-                  )}
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant={blog.published ? "default" : "secondary"}>
-                      {blog.published ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
-                      {blog.published ? "Published" : "Draft"}
-                    </Badge>
-                    <span className="text-xs text-gray-500">{new Date(blog.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2 line-clamp-2">{blog.title}</h3>
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{blog.excerpt}</p>
-                  <div className="flex items-center text-xs text-gray-500 mb-2">
-                    <User className="h-3 w-3 mr-1" />
-                    <span className="mr-3">{blog.author}</span>
-                    <Calendar className="h-3 w-3 mr-1" />
-                    <span>{new Date(blog.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {blog.tags.slice(0, 3).map((tag, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                    {blog.tags.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{blog.tags.length - 3}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-400 mb-3">URL: /blogs/{blog.slug || generateSlug(blog.title)}</div>
+            <CardHeader className="pb-3">
+              {blog.featuredImage && (
+                <div className="w-full h-32 mb-3 rounded-md overflow-hidden">
+                  <img
+                    src={blog.featuredImage || "/placeholder.svg"}
+                    alt={blog.featuredImageAlt || blog.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <Badge variant={blog.published ? "default" : "secondary"}>
+                  {blog.published ? "Published" : "Draft"}
+                </Badge>
+                <div className="flex space-x-2">
+                  <Button variant="outline" size="sm" onClick={() => handleEditBlog(blog)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => handleDeleteBlog(blog)}>
+                    <Trash className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm" onClick={() => handleEditBlog(blog)} className="flex-1">
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDeleteBlog(blog)}>
-                  <Trash className="h-4 w-4" />
-                </Button>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <h3 className="text-lg font-semibold mb-2 line-clamp-2">{blog.title}</h3>
+              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{blog.excerpt}</p>
+
+              <div className="flex items-center text-xs text-gray-500 mb-2">
+                <User className="h-3 w-3 mr-1" />
+                <span className="mr-3">{blog.author}</span>
+                <Calendar className="h-3 w-3 mr-1" />
+                <span>{new Date(blog.createdAt).toLocaleDateString()}</span>
               </div>
+
+              {blog.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {blog.tags.slice(0, 3).map((tag, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                  {blog.tags.length > 3 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{blog.tags.length - 3}
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              <div className="text-xs text-gray-400">URL: /blogs/{blog.slug || generateSlug(blog.title)}</div>
             </CardContent>
           </Card>
         ))}
@@ -361,6 +389,7 @@ export default function BlogsManager() {
 
       {filteredBlogs.length === 0 && (
         <div className="text-center py-12">
+          <div className="h-12 w-12 text-gray-400 mx-auto mb-4"></div>
           <p className="text-gray-500">No blogs found matching your criteria.</p>
         </div>
       )}
@@ -383,18 +412,12 @@ export default function BlogsManager() {
                 <TabsContent value="content" className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="title">Title</Label>
+                      <Label htmlFor="title">Blog Title *</Label>
                       <Input
                         id="title"
                         value={currentBlog.title}
-                        onChange={(e) => {
-                          const title = e.target.value
-                          setCurrentBlog({
-                            ...currentBlog,
-                            title,
-                            slug: generateSlug(title),
-                          })
-                        }}
+                        onChange={(e) => setCurrentBlog({ ...currentBlog, title: e.target.value })}
+                        placeholder="Enter blog title"
                       />
                     </div>
                     <div>
@@ -405,6 +428,11 @@ export default function BlogsManager() {
                         onChange={(e) => setCurrentBlog({ ...currentBlog, slug: e.target.value })}
                         placeholder="auto-generated-from-title"
                       />
+                      {currentBlog.title && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          URL: /blogs/{currentBlog.slug || generateSlug(currentBlog.title)}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -415,12 +443,12 @@ export default function BlogsManager() {
                       value={currentBlog.excerpt}
                       onChange={(e) => setCurrentBlog({ ...currentBlog, excerpt: e.target.value })}
                       rows={3}
-                      placeholder="Brief description of the blog post..."
+                      placeholder="Brief description of the blog post"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="content">Content</Label>
+                    <Label htmlFor="content">Content *</Label>
                     <Textarea
                       id="content"
                       value={currentBlog.content}
@@ -432,11 +460,12 @@ export default function BlogsManager() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="author">Author</Label>
+                      <Label htmlFor="author">Author *</Label>
                       <Input
                         id="author"
                         value={currentBlog.author}
                         onChange={(e) => setCurrentBlog({ ...currentBlog, author: e.target.value })}
+                        placeholder="Author name"
                       />
                     </div>
                     <div>
@@ -445,7 +474,7 @@ export default function BlogsManager() {
                         id="tags"
                         value={tagInput}
                         onChange={(e) => setTagInput(e.target.value)}
-                        placeholder="travel, visa, tips"
+                        placeholder="visa, travel, tips"
                       />
                     </div>
                   </div>
@@ -461,42 +490,48 @@ export default function BlogsManager() {
                 </TabsContent>
 
                 <TabsContent value="seo" className="space-y-4">
-                  <div>
-                    <Label htmlFor="metaTitle">Meta Title (SEO)</Label>
-                    <Input
-                      id="metaTitle"
-                      value={currentBlog.metaTitle || ""}
-                      onChange={(e) => setCurrentBlog({ ...currentBlog, metaTitle: e.target.value })}
-                      placeholder="SEO optimized title (60 characters max)"
-                      maxLength={60}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">{(currentBlog.metaTitle || "").length}/60 characters</p>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-blue-900 mb-2">Search Engine Preview</h4>
+                    <div className="bg-white p-3 rounded border">
+                      <div className="text-blue-600 text-lg hover:underline cursor-pointer">
+                        {currentBlog.metaTitle || currentBlog.title || "Blog Title"}
+                      </div>
+                      <div className="text-green-700 text-sm">
+                        visaa.in/blogs/{currentBlog.slug || generateSlug(currentBlog.title || "blog-title")}
+                      </div>
+                      <div className="text-gray-600 text-sm mt-1">
+                        {currentBlog.metaDescription || currentBlog.excerpt || "Blog description will appear here..."}
+                      </div>
+                    </div>
                   </div>
 
                   <div>
-                    <Label htmlFor="metaDescription">Meta Description (SEO)</Label>
-                    <Textarea
-                      id="metaDescription"
-                      value={currentBlog.metaDescription || ""}
-                      onChange={(e) => setCurrentBlog({ ...currentBlog, metaDescription: e.target.value })}
-                      rows={3}
-                      placeholder="SEO meta description (160 characters max)"
-                      maxLength={160}
+                    <Label htmlFor="metaTitle">Meta Title</Label>
+                    <Input
+                      id="metaTitle"
+                      value={currentBlog.metaTitle}
+                      onChange={(e) => setCurrentBlog({ ...currentBlog, metaTitle: e.target.value })}
+                      placeholder="SEO optimized title (auto-generated from title if empty)"
+                      maxLength={60}
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      {(currentBlog.metaDescription || "").length}/160 characters
+                      {currentBlog.metaTitle.length}/60 characters (recommended: 50-60)
                     </p>
                   </div>
 
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2">Search Preview</h4>
-                    <div className="text-blue-600 text-lg hover:underline cursor-pointer">
-                      {currentBlog.metaTitle || currentBlog.title || "Blog Title"}
-                    </div>
-                    <div className="text-green-700 text-sm">visaa.in/blogs/{currentBlog.slug || "blog-slug"}</div>
-                    <div className="text-gray-600 text-sm mt-1">
-                      {currentBlog.metaDescription || currentBlog.excerpt || "Blog description will appear here..."}
-                    </div>
+                  <div>
+                    <Label htmlFor="metaDescription">Meta Description</Label>
+                    <Textarea
+                      id="metaDescription"
+                      value={currentBlog.metaDescription}
+                      onChange={(e) => setCurrentBlog({ ...currentBlog, metaDescription: e.target.value })}
+                      rows={3}
+                      placeholder="SEO description for search results (auto-generated from excerpt if empty)"
+                      maxLength={160}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {currentBlog.metaDescription.length}/160 characters (recommended: 150-160)
+                    </p>
                   </div>
                 </TabsContent>
 
@@ -511,6 +546,7 @@ export default function BlogsManager() {
                       accept="image/*"
                     />
                     {uploadingImage && <p className="text-sm text-gray-500 mt-2">Uploading image...</p>}
+
                     {imagePreview && (
                       <div className="mt-4 relative w-full max-w-md">
                         <img
@@ -538,13 +574,11 @@ export default function BlogsManager() {
                       <Label htmlFor="featuredImageAlt">Featured Image ALT Text (SEO)</Label>
                       <Input
                         id="featuredImageAlt"
-                        value={currentBlog.featuredImageAlt || ""}
+                        value={currentBlog.featuredImageAlt}
                         onChange={(e) => setCurrentBlog({ ...currentBlog, featuredImageAlt: e.target.value })}
                         placeholder="Describe the image for accessibility and SEO"
                       />
-                      <p className="text-xs text-gray-500 mt-1">
-                        ALT text helps with accessibility and SEO. Describe what's in the image.
-                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Helps with SEO and accessibility for screen readers</p>
                     </div>
                   )}
                 </TabsContent>

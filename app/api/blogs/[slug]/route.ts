@@ -1,24 +1,26 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/mongodb"
-import type { Blog } from "@/lib/types"
 
-export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
   try {
-    const { slug } = await params
-    const { db } = await connectToDatabase()
+    const { slug } = params
 
-    const blog = await db.collection<Blog>("blogs").findOne({
-      slug,
+    const client = await connectToDatabase()
+    const db = client.db("jmt_travel")
+
+    // Only return published blogs for public API
+    const blog = await db.collection("blogs").findOne({
+      slug: slug,
       published: true,
     })
 
     if (!blog) {
-      return NextResponse.json({ message: "Blog not found" }, { status: 404 })
+      return NextResponse.json({ error: "Blog not found" }, { status: 404 })
     }
 
     return NextResponse.json(blog)
   } catch (error) {
     console.error("Error fetching blog:", error)
-    return NextResponse.json({ message: "Failed to fetch blog", error }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch blog" }, { status: 500 })
   }
 }

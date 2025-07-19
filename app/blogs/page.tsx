@@ -1,14 +1,12 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Calendar, User, Phone, Mail, Clock } from "lucide-react"
+import { Calendar, User, Clock } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Visa & Travel Blogs | Visaa.in",
-  description:
-    "Read the latest visa guides, travel tips, and country-specific information to help with your visa applications.",
+  description: "Read the latest visa guides, travel tips, and immigration news from our experts at Visaa.in",
 }
 
 async function getBlogs() {
@@ -28,141 +26,76 @@ async function getBlogs() {
 
 export default async function BlogsPage() {
   const blogs = await getBlogs()
-  const publishedBlogs = blogs.filter((blog: any) => blog.published)
-  const latestBlogs = publishedBlogs.slice(0, 5)
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">Visa & Travel Blogs</h1>
-              <p className="text-gray-600">
-                Stay updated with the latest visa guides, travel tips, and country-specific information to help with
-                your visa applications.
-              </p>
-            </div>
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Visa & Travel Blog</h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Stay updated with the latest visa guides, travel tips, and immigration news
+          </p>
+        </div>
 
-            {publishedBlogs.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500">No blogs published yet. Check back soon!</p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {publishedBlogs.map((blog: any) => (
-                  <Card key={blog._id} className="hover:shadow-lg transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col md:flex-row gap-6">
-                        {blog.featuredImage && (
-                          <div className="md:w-1/3">
-                            <img
-                              src={blog.featuredImage || "/placeholder.svg"}
-                              alt={blog.title}
-                              className="w-full h-48 object-cover rounded-lg"
-                            />
-                          </div>
-                        )}
-                        <div className={blog.featuredImage ? "md:w-2/3" : "w-full"}>
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                            <div className="flex items-center gap-1">
-                              <User className="h-4 w-4" />
-                              {blog.author}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              {new Date(blog.publishedAt || blog.createdAt).toLocaleDateString()}
-                            </div>
-                          </div>
-                          <h2 className="text-xl font-semibold text-gray-900 mb-3">
-                            <Link href={`/blogs/${blog.slug}`} className="hover:text-blue-600 transition-colors">
-                              {blog.title}
-                            </Link>
-                          </h2>
-                          <p className="text-gray-600 mb-4 line-clamp-3">{blog.excerpt}</p>
-                          <div className="flex items-center justify-between">
-                            <div className="flex flex-wrap gap-2">
-                              {blog.tags.slice(0, 3).map((tag: string, index: number) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                            <Link href={`/blogs/${blog.slug}`}>
-                              <Button variant="outline" size="sm">
-                                Read More
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+        {blogs.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">No blog posts available at the moment.</p>
           </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="space-y-6">
-              {/* Latest Blogs */}
-              <Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {blogs.map((blog: any) => (
+              <Card key={blog._id} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="p-0">
+                  {blog.featuredImage && (
+                    <div className="w-full h-48 overflow-hidden rounded-t-lg">
+                      <img
+                        src={blog.featuredImage || "/placeholder.svg"}
+                        alt={blog.featuredImageAlt || blog.title}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+                </CardHeader>
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Latest Blogs</h3>
-                  <div className="space-y-4">
-                    {latestBlogs.map((blog: any) => (
-                      <div key={blog._id} className="border-b border-gray-200 pb-4 last:border-b-0">
-                        <Link href={`/blogs/${blog.slug}`} className="block hover:text-blue-600 transition-colors">
-                          <h4 className="font-medium text-sm mb-2 line-clamp-2">{blog.title}</h4>
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(blog.publishedAt || blog.createdAt).toLocaleDateString()}
-                          </div>
-                        </Link>
-                      </div>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {blog.tags.slice(0, 2).map((tag: string, index: number) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Need Help Section */}
-              <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-4">Need Help?</h3>
-                  <p className="text-blue-800 text-sm mb-4">
-                    Our visa experts are here to assist you with your application.
-                  </p>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-blue-800">
-                      <Mail className="h-4 w-4" />
-                      <a href="mailto:visa@journeymytrip.com" className="hover:underline">
-                        visa@journeymytrip.com
-                      </a>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-3 line-clamp-2">
+                    <Link href={`/blogs/${blog.slug}`} className="hover:text-blue-600 transition-colors">
+                      {blog.title}
+                    </Link>
+                  </h2>
+
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">{blog.excerpt}</p>
+
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center">
+                        <User className="h-3 w-3 mr-1" />
+                        <span>{blog.author}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        <span>{new Date(blog.publishedAt).toLocaleDateString()}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-blue-800">
-                      <Phone className="h-4 w-4" />
-                      <a href="tel:+919599076202" className="hover:underline">
-                        +91 9599076202
-                      </a>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-blue-800">
-                      <Clock className="h-4 w-4" />
-                      <span>9 AM - 6 PM (Mon-Sat)</span>
-                    </div>
+                    {blog.readTime && (
+                      <div className="flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>{blog.readTime} min read</span>
+                      </div>
+                    )}
                   </div>
-                  <Button asChild className="w-full mt-4">
-                    <a href="tel:+919599076202">
-                      <Phone className="h-4 w-4 mr-2" />
-                      Call Now
-                    </a>
-                  </Button>
                 </CardContent>
               </Card>
-            </div>
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
