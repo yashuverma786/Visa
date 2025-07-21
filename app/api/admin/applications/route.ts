@@ -1,10 +1,11 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/mongodb"
-import { checkAdminAuth } from "@/lib/auth"
+import { isAuthenticated } from "@/lib/auth"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    if (!checkAdminAuth(request)) {
+    const authenticated = await isAuthenticated()
+    if (!authenticated) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -23,30 +24,21 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function DELETE(request: Request) {
   try {
-    if (!checkAdminAuth(request)) {
+    const authenticated = await isAuthenticated()
+    if (!authenticated) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const body = await request.json()
+    const { id } = await request.json()
     const { db } = await connectToDatabase()
 
-    const applicationData = {
-      ...body,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      status: body.status || "pending",
-    }
+    await db.collection("visa_applications").deleteOne({ _id: id })
 
-    const result = await db.collection("visa_applications").insertOne(applicationData)
-
-    return NextResponse.json({
-      _id: result.insertedId.toString(),
-      ...applicationData,
-    })
+    return NextResponse.json({ message: "Application deleted successfully" })
   } catch (error) {
-    console.error("Error creating application:", error)
-    return NextResponse.json({ error: "Failed to create application" }, { status: 500 })
+    console.error("Error deleting application:", error)
+    return NextResponse.json({ error: "Failed to delete application" }, { status: 500 })
   }
 }

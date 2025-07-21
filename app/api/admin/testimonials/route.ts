@@ -1,13 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/mongodb"
-import { checkAdminAuth } from "@/lib/auth"
+import { isAuthenticated } from "@/lib/auth"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const { db } = await connectToDatabase()
     const testimonials = await db.collection("testimonials").find({}).sort({ createdAt: -1 }).toArray()
 
@@ -23,26 +19,18 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    if (!checkAdminAuth(request)) {
+    const authenticated = await isAuthenticated()
+    if (!authenticated) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await request.json()
     const { db } = await connectToDatabase()
 
-    if (!body.name || !body.content) {
-      return NextResponse.json({ error: "Name and content are required" }, { status: 400 })
-    }
-
     const testimonialData = {
-      name: body.name.trim(),
-      content: body.content.trim(),
-      country: body.country || "",
-      rating: body.rating || 5,
-      image: body.image || "",
-      isApproved: body.isApproved || false,
+      ...body,
       createdAt: new Date(),
       updatedAt: new Date(),
     }

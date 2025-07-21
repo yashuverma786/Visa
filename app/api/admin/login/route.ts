@@ -1,31 +1,23 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { validateAdminCredentials, setAdminSession } from "@/lib/auth"
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const { username, password } = await request.json()
 
     if (!username || !password) {
-      return NextResponse.json({ error: "Username and password required" }, { status: 400 })
+      return NextResponse.json({ error: "Username and password are required" }, { status: 400 })
     }
 
-    if (validateAdminCredentials(username, password)) {
-      const sessionToken = setAdminSession()
+    const isValid = validateAdminCredentials(username, password)
 
-      const response = NextResponse.json({ success: true, message: "Login successful" })
-
-      // Set session cookie
-      response.cookies.set("admin_session", sessionToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-      })
-
-      return response
-    } else {
+    if (!isValid) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
+
+    await setAdminSession()
+
+    return NextResponse.json({ message: "Login successful" })
   } catch (error) {
     console.error("Login error:", error)
     return NextResponse.json({ error: "Login failed" }, { status: 500 })

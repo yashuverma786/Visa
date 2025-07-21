@@ -1,11 +1,9 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { connectToDatabase } from "@/lib/mongodb"
-import { ObjectId } from "mongodb"
 
 export interface Task {
-  _id?: string
+  id: string
   title: string
   description: string
   completed: boolean
@@ -13,123 +11,79 @@ export interface Task {
   updatedAt: Date
 }
 
+// In-memory storage for demo purposes
+const tasks: Task[] = [
+  {
+    id: "1",
+    title: "Setup MongoDB Integration",
+    description: "Configure MongoDB connection and collections",
+    completed: true,
+    createdAt: new Date("2024-01-01"),
+    updatedAt: new Date("2024-01-01"),
+  },
+  {
+    id: "2",
+    title: "Implement User Authentication",
+    description: "Add login/logout functionality for admin panel",
+    completed: true,
+    createdAt: new Date("2024-01-02"),
+    updatedAt: new Date("2024-01-02"),
+  },
+  {
+    id: "3",
+    title: "Create Country Management",
+    description: "Build CRUD operations for countries and visa categories",
+    completed: false,
+    createdAt: new Date("2024-01-03"),
+    updatedAt: new Date("2024-01-03"),
+  },
+]
+
 export async function getTasks(): Promise<Task[]> {
-  try {
-    const { db } = await connectToDatabase()
-    const tasks = await db.collection<Task>("tasks").find({}).sort({ createdAt: -1 }).toArray()
-
-    return tasks.map((task) => ({
-      ...task,
-      _id: task._id?.toString(),
-    }))
-  } catch (error) {
-    console.error("Error fetching tasks:", error)
-    return []
-  }
+  return tasks
 }
 
-export async function createTask(title: string, description: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    if (!title.trim()) {
-      return { success: false, error: "Title is required" }
-    }
-
-    const { db } = await connectToDatabase()
-
-    const taskData = {
-      title: title.trim(),
-      description: description.trim(),
-      completed: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
-
-    await db.collection("tasks").insertOne(taskData)
-    revalidatePath("/")
-
-    return { success: true }
-  } catch (error) {
-    console.error("Error creating task:", error)
-    return { success: false, error: "Failed to create task" }
+export async function createTask(title: string, description: string): Promise<Task> {
+  const newTask: Task = {
+    id: Date.now().toString(),
+    title,
+    description,
+    completed: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   }
+
+  tasks.push(newTask)
+  revalidatePath("/")
+  return newTask
 }
 
-export async function updateTask(id: string, updates: Partial<Task>): Promise<{ success: boolean; error?: string }> {
-  try {
-    if (!ObjectId.isValid(id)) {
-      return { success: false, error: "Invalid task ID" }
-    }
+export async function updateTask(id: string, updates: Partial<Task>): Promise<Task | null> {
+  const taskIndex = tasks.findIndex((task) => task.id === id)
+  if (taskIndex === -1) return null
 
-    const { db } = await connectToDatabase()
-
-    const updateData = {
-      ...updates,
-      updatedAt: new Date(),
-    }
-
-    const result = await db.collection("tasks").updateOne({ _id: new ObjectId(id) }, { $set: updateData })
-
-    if (result.matchedCount === 0) {
-      return { success: false, error: "Task not found" }
-    }
-
-    revalidatePath("/")
-    return { success: true }
-  } catch (error) {
-    console.error("Error updating task:", error)
-    return { success: false, error: "Failed to update task" }
+  tasks[taskIndex] = {
+    ...tasks[taskIndex],
+    ...updates,
+    updatedAt: new Date(),
   }
+
+  revalidatePath("/")
+  return tasks[taskIndex]
 }
 
-export async function deleteTask(id: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    if (!ObjectId.isValid(id)) {
-      return { success: false, error: "Invalid task ID" }
-    }
+export async function deleteTask(id: string): Promise<boolean> {
+  const taskIndex = tasks.findIndex((task) => task.id === id)
+  if (taskIndex === -1) return false
 
-    const { db } = await connectToDatabase()
-
-    const result = await db.collection("tasks").deleteOne({ _id: new ObjectId(id) })
-
-    if (result.deletedCount === 0) {
-      return { success: false, error: "Task not found" }
-    }
-
-    revalidatePath("/")
-    return { success: true }
-  } catch (error) {
-    console.error("Error deleting task:", error)
-    return { success: false, error: "Failed to delete task" }
-  }
+  tasks.splice(taskIndex, 1)
+  revalidatePath("/")
+  return true
 }
 
-export async function toggleTask(id: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    if (!ObjectId.isValid(id)) {
-      return { success: false, error: "Invalid task ID" }
-    }
+export async function toggleTask(id: string): Promise<Task | null> {
+  const task = tasks.find((task) => task.id === id)
+  if (!task) return null
 
-    const { db } = await connectToDatabase()
-
-    const task = await db.collection("tasks").findOne({ _id: new ObjectId(id) })
-    if (!task) {
-      return { success: false, error: "Task not found" }
-    }
-
-    await db.collection("tasks").updateOne(
-      { _id: new ObjectId(id) },
-      {
-        $set: {
-          completed: !task.completed,
-          updatedAt: new Date(),
-        },
-      },
-    )
-
-    revalidatePath("/")
-    return { success: true }
-  } catch (error) {
-    console.error("Error toggling task:", error)
-    return { success: false, error: "Failed to toggle task" }
-  }
+  return updateTask(id, { completed: !task.completed })
 }

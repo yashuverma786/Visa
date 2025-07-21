@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/mongodb"
-import { checkAdminAuth } from "@/lib/auth"
+import { isAuthenticated } from "@/lib/auth"
 
 function generateSlug(title: string): string {
   return title
@@ -11,12 +11,8 @@ function generateSlug(title: string): string {
     .trim()
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const { db } = await connectToDatabase()
     const blogs = await db.collection("blogs").find({}).sort({ createdAt: -1 }).toArray()
 
@@ -32,9 +28,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    if (!checkAdminAuth(request)) {
+    const authenticated = await isAuthenticated()
+    if (!authenticated) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -60,10 +57,11 @@ export async function POST(request: NextRequest) {
       slug: slug,
       excerpt: body.excerpt || "",
       content: body.content.trim(),
-      image: body.image || "",
-      author: body.author || "JMT Travel Team",
+      author: body.author || "Admin",
       tags: body.tags || [],
-      isPublished: body.isPublished || false,
+      featured: body.featured || false,
+      image: body.image || "",
+      publishedAt: body.publishedAt ? new Date(body.publishedAt) : new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
     }
