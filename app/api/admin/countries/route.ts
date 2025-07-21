@@ -6,7 +6,14 @@ export async function GET() {
   try {
     const { db } = await connectToDatabase()
     const countries = await db.collection<Country>("countries").find({}).toArray()
-    return NextResponse.json(countries)
+
+    // Convert MongoDB _id to string for each country
+    const processedCountries = countries.map((country) => ({
+      ...country,
+      _id: country._id?.toString(),
+    }))
+
+    return NextResponse.json(processedCountries)
   } catch (error) {
     console.error("Error fetching countries:", error)
     return NextResponse.json({ error: "Failed to fetch countries" }, { status: 500 })
@@ -19,8 +26,8 @@ export async function POST(req: Request) {
     const countryData: Omit<Country, "_id"> = await req.json()
 
     // Basic validation
-    if (!countryData.name || !countryData.code) {
-      return NextResponse.json({ error: "Country name and code are required" }, { status: 400 })
+    if (!countryData.name || !countryData.code || !countryData.slug) {
+      return NextResponse.json({ error: "Country name, code, and slug are required" }, { status: 400 })
     }
 
     if (!countryData.description) {
@@ -33,23 +40,34 @@ export async function POST(req: Request) {
 
     // Check if country already exists
     const existingCountry = await db.collection<Country>("countries").findOne({
-      $or: [{ code: countryData.code.toUpperCase() }, { slug: countryData.slug }],
+      $or: [{ code: countryData.code.toUpperCase() }, { slug: countryData.slug.toLowerCase() }],
     })
 
     if (existingCountry) {
       return NextResponse.json({ error: "Country with this code or slug already exists" }, { status: 400 })
     }
 
-    const result = await db.collection<Country>("countries").insertOne({
+    // Prepare country data for insertion
+    const newCountryData = {
       ...countryData,
       code: countryData.code.toUpperCase(),
+      slug: countryData.slug.toLowerCase(),
+      currency: countryData.currency || "INR",
       createdAt: new Date(),
       updatedAt: new Date(),
-    })
+    }
+
+    const result = await db.collection<Country>("countries").insertOne(newCountryData)
 
     if (result.acknowledged) {
       const newCountry = await db.collection<Country>("countries").findOne({ _id: result.insertedId })
-      return NextResponse.json(newCountry, { status: 201 })
+      return NextResponse.json(
+        {
+          ...newCountry,
+          _id: newCountry?._id?.toString(),
+        },
+        { status: 201 },
+      )
     } else {
       return NextResponse.json({ error: "Failed to add country" }, { status: 500 })
     }

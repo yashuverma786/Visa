@@ -8,21 +8,38 @@ export interface Task {
   updatedAt: Date
 }
 
+export interface VisaCategory {
+  id: string
+  name: string
+  type: "Tourist" | "Business" | "Student" | "Work" | "Family" | "Transit" | "Medical"
+  price: number
+  currency: string
+  processingTime: string
+  validity: string
+  entries: "Single" | "Multiple"
+  requiredDocuments: string[]
+  processSteps: string[]
+  eligibility: string[]
+  additionalInfo: string
+}
+
 export interface Country {
-  _id: string
+  _id?: string
   name: string
   code: string
   slug: string
-  flagEmoji: string
-  visaFee: string
-  currency: string
-  processingTime: string
+  flagEmoji?: string
   description: string
-  requirements: string
-  imageUrl: string
-  visaTypes: VisaType[]
-  generalDocuments?: string
-  generalProcess?: string
+  image: string
+  visaFee?: string
+  currency?: string
+  processingTime?: string
+  requirements?: string
+  imageUrl?: string
+  visaTypes?: VisaType[]
+  visaCategories: VisaCategory[]
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export interface VisaType {
