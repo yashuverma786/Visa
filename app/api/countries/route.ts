@@ -1,25 +1,29 @@
 import { NextResponse } from "next/server"
-import { getCountries } from "@/lib/database"
+import { connectToDatabase } from "@/lib/mongodb"
+import type { Country } from "@/lib/types"
 
 export async function GET() {
   try {
-    console.log("🔍 Fetching countries for frontend...")
+    const { db } = await connectToDatabase()
 
-    const countries = await getCountries()
-    console.log(`✅ Found ${countries.length} countries for frontend`)
+    // Fetch all published countries
+    const countries = await db.collection<Country>("countries").find({}).sort({ name: 1 }).toArray()
 
-    // Add cache headers to ensure fresh data
-    const response = NextResponse.json(countries)
-    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-    response.headers.set("Pragma", "no-cache")
-    response.headers.set("Expires", "0")
+    // Convert MongoDB _id to string and ensure proper structure
+    const processedCountries = countries.map((country) => ({
+      ...country,
+      _id: country._id?.toString(),
+      slug:
+        country.slug ||
+        country.name
+          .toLowerCase()
+          .replace(/[^a-z0-9 -]/g, "")
+          .replace(/\s+/g, "-"),
+    }))
 
-    return response
+    return NextResponse.json(processedCountries)
   } catch (error) {
-    console.error("❌ Error fetching countries:", error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
-      { status: 500 },
-    )
+    console.error("Error fetching countries:", error)
+    return NextResponse.json({ error: "Failed to fetch countries" }, { status: 500 })
   }
 }

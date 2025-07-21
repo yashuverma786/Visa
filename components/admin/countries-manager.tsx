@@ -45,6 +45,7 @@ export default function CountriesManager() {
   const [editingCountry, setEditingCountry] = useState<Country | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [imagePreview, setImagePreview] = useState<string>("")
   const [formData, setFormData] = useState({
     name: "",
     code: "",
@@ -121,6 +122,13 @@ export default function CountriesManager() {
       setUploadingImage(true)
       console.log("Uploading image:", file.name, file.size)
 
+      // Create preview immediately
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+
       const formDataUpload = new FormData()
       formDataUpload.append("file", file)
 
@@ -133,6 +141,7 @@ export default function CountriesManager() {
         const { url } = await response.json()
         console.log("Image uploaded successfully:", url)
         setFormData({ ...formData, image: url })
+        setImagePreview(url)
         toast({
           title: "Success",
           description: "Image uploaded successfully!",
@@ -145,6 +154,7 @@ export default function CountriesManager() {
           description: `Failed to upload image: ${errorData.error || "Unknown error"}`,
           variant: "destructive",
         })
+        setImagePreview("")
       }
     } catch (error) {
       console.error("Upload error:", error)
@@ -153,6 +163,7 @@ export default function CountriesManager() {
         description: "Error uploading image. Please try again.",
         variant: "destructive",
       })
+      setImagePreview("")
     } finally {
       setUploadingImage(false)
     }
@@ -222,7 +233,7 @@ export default function CountriesManager() {
     }
 
     // Generate slug if not provided
-    const slug = formData.slug || generateSlug(formData.name)
+    const slug = formData.slug.trim() || generateSlug(formData.name)
 
     // Validate visa categories
     for (let i = 0; i < formData.visaCategories.length; i++) {
@@ -251,10 +262,10 @@ export default function CountriesManager() {
         const method = editingCountry ? "PUT" : "POST"
 
         const countryData = {
-          name: formData.name,
-          code: formData.code,
+          name: formData.name.trim(),
+          code: formData.code.trim().toUpperCase(),
           slug: slug,
-          description: formData.description,
+          description: formData.description.trim(),
           image: formData.image,
           currency: formData.currency,
           visaCategories: formData.visaCategories,
@@ -280,13 +291,15 @@ export default function CountriesManager() {
 
         if (response.ok) {
           console.log("Country saved successfully")
-          await fetchCountries() // Refresh the list
-          resetForm()
-          setIsDialogOpen(false)
           toast({
             title: "Success",
             description: editingCountry ? "Country updated successfully!" : "Country added successfully!",
           })
+
+          // Refresh the list and close dialog
+          await fetchCountries()
+          resetForm()
+          setIsDialogOpen(false)
         } else {
           console.error("Failed to save country:", responseData)
           toast({
@@ -311,12 +324,13 @@ export default function CountriesManager() {
     setFormData({
       name: country.name,
       code: country.code,
-      slug: country.slug,
+      slug: country.slug || generateSlug(country.name),
       description: country.description,
-      image: country.image,
+      image: country.image || "",
       currency: country.currency || "INR",
       visaCategories: country.visaCategories || [],
     })
+    setImagePreview(country.image || "")
     setIsDialogOpen(true)
   }
 
@@ -330,11 +344,11 @@ export default function CountriesManager() {
         })
 
         if (response.ok) {
-          await fetchCountries()
           toast({
             title: "Success",
             description: "Country deleted successfully!",
           })
+          await fetchCountries()
         } else {
           toast({
             title: "Error",
@@ -355,6 +369,7 @@ export default function CountriesManager() {
 
   const resetForm = () => {
     setEditingCountry(null)
+    setImagePreview("")
     setFormData({
       name: "",
       code: "",
@@ -363,6 +378,15 @@ export default function CountriesManager() {
       image: "",
       currency: "INR",
       visaCategories: [],
+    })
+  }
+
+  const handleNameChange = (name: string) => {
+    const slug = generateSlug(name)
+    setFormData({
+      ...formData,
+      name,
+      slug: formData.slug || slug, // Only auto-generate if slug is empty
     })
   }
 
@@ -398,15 +422,9 @@ export default function CountriesManager() {
                     <Input
                       id="name"
                       value={formData.name}
-                      onChange={(e) => {
-                        const name = e.target.value
-                        setFormData({
-                          ...formData,
-                          name,
-                          slug: formData.slug || generateSlug(name),
-                        })
-                      }}
+                      onChange={(e) => handleNameChange(e.target.value)}
                       required
+                      placeholder="e.g., United Kingdom"
                     />
                   </div>
                   <div>
@@ -418,11 +436,10 @@ export default function CountriesManager() {
                       placeholder="e.g., uk, usa, canada"
                       required
                     />
-                    {formData.name && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        URL: /countries/{formData.slug || generateSlug(formData.name)}
-                      </p>
-                    )}
+                    <div className="mt-1 text-xs text-gray-500">
+                      URL Preview: /countries/
+                      {formData.slug || (formData.name ? generateSlug(formData.name) : "your-slug")}
+                    </div>
                   </div>
                 </div>
 
@@ -466,6 +483,7 @@ export default function CountriesManager() {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
                     required
+                    placeholder="Enter country description..."
                   />
                 </div>
 
@@ -486,10 +504,10 @@ export default function CountriesManager() {
                         {uploadingImage ? "Uploading..." : "Upload Image"}
                       </label>
                     </Button>
-                    {formData.image && (
+                    {(imagePreview || formData.image) && (
                       <div className="relative w-32 h-24">
                         <Image
-                          src={formData.image || "/placeholder.svg"}
+                          src={imagePreview || formData.image || "/placeholder.svg"}
                           alt="Preview"
                           fill
                           className="object-cover rounded"
@@ -499,7 +517,10 @@ export default function CountriesManager() {
                           variant="destructive"
                           size="icon"
                           className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                          onClick={() => setFormData({ ...formData, image: "" })}
+                          onClick={() => {
+                            setFormData({ ...formData, image: "" })
+                            setImagePreview("")
+                          }}
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -589,7 +610,9 @@ export default function CountriesManager() {
                   <span>Currency:</span>
                   <span className="font-semibold">{country.currency || "INR"}</span>
                 </div>
-                <div className="text-xs text-gray-400">URL: /countries/{country.slug}</div>
+                <div className="text-xs text-gray-400 bg-gray-50 p-1 rounded">
+                  URL: /countries/{country.slug || generateSlug(country.name)}
+                </div>
                 {country.visaCategories && country.visaCategories.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {country.visaCategories.slice(0, 3).map((cat, idx) => (
@@ -672,11 +695,6 @@ function VisaCategoryForm({
     const newArray = category[field].filter((_, i) => i !== itemIndex)
     updateField(field, newArray)
   }
-
-  const selectedCurrency =
-    currencies.find((c) => c.code === category.currency) ||
-    currencies.find((c) => c.code === defaultCurrency) ||
-    currencies[5]
 
   return (
     <Card className="border-2 border-dashed border-gray-200">
