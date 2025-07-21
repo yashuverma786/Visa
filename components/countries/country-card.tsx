@@ -9,6 +9,15 @@ interface CountryCardProps {
   country: Country
 }
 
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9 -]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim()
+}
+
 export default function CountryCard({ country }: CountryCardProps) {
   // Get the cheapest visa category for display
   const cheapestCategory = country.visaCategories?.reduce((prev, current) =>
@@ -16,6 +25,7 @@ export default function CountryCard({ country }: CountryCardProps) {
   )
 
   const startingPrice = cheapestCategory?.price || 0
+  const countrySlug = country.slug || generateSlug(country.name)
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -62,7 +72,7 @@ export default function CountryCard({ country }: CountryCardProps) {
         </div>
 
         <Button asChild className="w-full">
-          <Link href={`/countries/${country.code.toLowerCase()}`}>View Details</Link>
+          <Link href={`/countries/${countrySlug}`}>View Details</Link>
         </Button>
       </CardContent>
     </Card>

@@ -5,12 +5,19 @@ import type { Country } from "@/lib/types"
 export async function GET() {
   try {
     const { db } = await connectToDatabase()
-    const countries = await db.collection<Country>("countries").find({}).toArray()
 
-    // Convert MongoDB _id to string for each country
+    const countries = await db.collection<Country>("countries").find({}).sort({ name: 1 }).toArray()
+
+    // Convert MongoDB _id to string and ensure proper structure
     const processedCountries = countries.map((country) => ({
       ...country,
       _id: country._id?.toString(),
+      slug:
+        country.slug ||
+        country.name
+          .toLowerCase()
+          .replace(/[^a-z0-9 -]/g, "")
+          .replace(/\s+/g, "-"),
     }))
 
     return NextResponse.json(processedCountries)
@@ -20,59 +27,46 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
     const { db } = await connectToDatabase()
-    const countryData: Omit<Country, "_id"> = await req.json()
+    const body = await request.json()
 
-    // Basic validation
-    if (!countryData.name || !countryData.code || !countryData.slug) {
-      return NextResponse.json({ error: "Country name, code, and slug are required" }, { status: 400 })
+    // Validate required fields
+    if (!body.name || !body.slug || !body.description) {
+      return NextResponse.json({ error: "Missing required fields: name, slug, description" }, { status: 400 })
     }
 
-    if (!countryData.description) {
-      return NextResponse.json({ error: "Description is required" }, { status: 400 })
+    // Check if slug already exists
+    const existingCountry = await db.collection("countries").findOne({ slug: body.slug })
+    if (existingCountry) {
+      return NextResponse.json({ error: "A country with this slug already exists" }, { status: 400 })
     }
 
-    if (!countryData.visaCategories || countryData.visaCategories.length === 0) {
+    // Validate visa categories
+    if (!body.visaCategories || !Array.isArray(body.visaCategories) || body.visaCategories.length === 0) {
       return NextResponse.json({ error: "At least one visa category is required" }, { status: 400 })
     }
 
-    // Check if country already exists
-    const existingCountry = await db.collection<Country>("countries").findOne({
-      $or: [{ code: countryData.code.toUpperCase() }, { slug: countryData.slug.toLowerCase() }],
-    })
-
-    if (existingCountry) {
-      return NextResponse.json({ error: "Country with this code or slug already exists" }, { status: 400 })
-    }
-
-    // Prepare country data for insertion
-    const newCountryData = {
-      ...countryData,
-      code: countryData.code.toUpperCase(),
-      slug: countryData.slug.toLowerCase(),
-      currency: countryData.currency || "INR",
+    const countryData = {
+      name: body.name.trim(),
+      slug: body.slug.trim().toLowerCase(),
+      description: body.description.trim(),
+      image: body.image || "",
+      currency: body.currency || "INR",
+      visaCategories: body.visaCategories,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
 
-    const result = await db.collection<Country>("countries").insertOne(newCountryData)
+    const result = await db.collection("countries").insertOne(countryData)
 
-    if (result.acknowledged) {
-      const newCountry = await db.collection<Country>("countries").findOne({ _id: result.insertedId })
-      return NextResponse.json(
-        {
-          ...newCountry,
-          _id: newCountry?._id?.toString(),
-        },
-        { status: 201 },
-      )
-    } else {
-      return NextResponse.json({ error: "Failed to add country" }, { status: 500 })
-    }
+    return NextResponse.json({
+      _id: result.insertedId.toString(),
+      ...countryData,
+    })
   } catch (error) {
-    console.error("Error adding country:", error)
-    return NextResponse.json({ error: "Failed to add country" }, { status: 500 })
+    console.error("Error creating country:", error)
+    return NextResponse.json({ error: "Failed to create country" }, { status: 500 })
   }
 }

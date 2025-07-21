@@ -1,96 +1,106 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { checkAdminAuth } from "@/lib/auth"
+import { NextResponse } from "next/server"
+import { ObjectId } from "mongodb"
 import { connectToDatabase } from "@/lib/mongodb"
 import type { Country } from "@/lib/types"
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const { id } = await params
-    console.log("Attempting to delete country with ID:", id)
-
     const { db } = await connectToDatabase()
-    const { ObjectId } = require("mongodb")
 
     if (!ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid country ID format" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid country ID" }, { status: 400 })
+    }
+
+    const country = await db.collection<Country>("countries").findOne({ _id: new ObjectId(id) })
+
+    if (!country) {
+      return NextResponse.json({ error: "Country not found" }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      ...country,
+      _id: country._id?.toString(),
+    })
+  } catch (error) {
+    console.error("Error fetching country:", error)
+    return NextResponse.json({ error: "Failed to fetch country" }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params
+    const { db } = await connectToDatabase()
+    const body = await request.json()
+
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid country ID" }, { status: 400 })
+    }
+
+    // Validate required fields
+    if (!body.name || !body.slug || !body.description) {
+      return NextResponse.json({ error: "Missing required fields: name, slug, description" }, { status: 400 })
+    }
+
+    // Check if slug already exists (excluding current country)
+    const existingCountry = await db.collection("countries").findOne({
+      slug: body.slug,
+      _id: { $ne: new ObjectId(id) },
+    })
+    if (existingCountry) {
+      return NextResponse.json({ error: "A country with this slug already exists" }, { status: 400 })
+    }
+
+    // Validate visa categories
+    if (!body.visaCategories || !Array.isArray(body.visaCategories) || body.visaCategories.length === 0) {
+      return NextResponse.json({ error: "At least one visa category is required" }, { status: 400 })
+    }
+
+    const updateData = {
+      name: body.name.trim(),
+      slug: body.slug.trim().toLowerCase(),
+      description: body.description.trim(),
+      image: body.image || "",
+      currency: body.currency || "INR",
+      visaCategories: body.visaCategories,
+      updatedAt: new Date(),
+    }
+
+    const result = await db.collection("countries").updateOne({ _id: new ObjectId(id) }, { $set: updateData })
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: "Country not found" }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      _id: id,
+      ...updateData,
+    })
+  } catch (error) {
+    console.error("Error updating country:", error)
+    return NextResponse.json({ error: "Failed to update country" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params
+    const { db } = await connectToDatabase()
+
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid country ID" }, { status: 400 })
     }
 
     const result = await db.collection("countries").deleteOne({ _id: new ObjectId(id) })
 
-    if (result.deletedCount > 0) {
-      console.log("Country deleted successfully:", id)
-      return NextResponse.json({ success: true })
-    } else {
-      console.log("Country not found:", id)
+    if (result.deletedCount === 0) {
       return NextResponse.json({ error: "Country not found" }, { status: 404 })
     }
+
+    return NextResponse.json({ message: "Country deleted successfully" })
   } catch (error) {
     console.error("Error deleting country:", error)
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
-  }
-}
-
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const { id } = await params
-    const countryData: Partial<Country> = await request.json()
-
-    const { db } = await connectToDatabase()
-    const { ObjectId } = require("mongodb")
-
-    // Validate ObjectId
-    if (!ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid country ID format" }, { status: 400 })
-    }
-
-    // Prepare update data (exclude _id from update)
-    const { _id, ...updateData } = countryData
-    const finalUpdateData = {
-      ...updateData,
-      updatedAt: new Date(),
-    }
-
-    if (countryData.code) {
-      finalUpdateData.code = countryData.code.toUpperCase()
-    }
-
-    if (countryData.slug) {
-      finalUpdateData.slug = countryData.slug.toLowerCase()
-    }
-
-    const result = await db.collection("countries").updateOne({ _id: new ObjectId(id) }, { $set: finalUpdateData })
-
-    if (result.modifiedCount > 0) {
-      const updatedCountry = await db.collection("countries").findOne({ _id: new ObjectId(id) })
-      return NextResponse.json({
-        ...updatedCountry,
-        _id: updatedCountry?._id?.toString(),
-      })
-    } else {
-      return NextResponse.json({ error: "Country not found or no changes made" }, { status: 404 })
-    }
-  } catch (error) {
-    console.error("Error updating country:", error)
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to delete country" }, { status: 500 })
   }
 }

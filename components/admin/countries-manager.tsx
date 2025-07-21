@@ -48,7 +48,6 @@ export default function CountriesManager() {
   const [imagePreview, setImagePreview] = useState<string>("")
   const [formData, setFormData] = useState({
     name: "",
-    code: "",
     slug: "",
     description: "",
     image: "",
@@ -223,7 +222,7 @@ export default function CountriesManager() {
     }
 
     // Validate all required fields
-    if (!formData.name.trim() || !formData.code.trim() || !formData.description.trim()) {
+    if (!formData.name.trim() || !formData.description.trim()) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields",
@@ -263,7 +262,6 @@ export default function CountriesManager() {
 
         const countryData = {
           name: formData.name.trim(),
-          code: formData.code.trim().toUpperCase(),
           slug: slug,
           description: formData.description.trim(),
           image: formData.image,
@@ -275,7 +273,6 @@ export default function CountriesManager() {
           method,
           url,
           name: countryData.name,
-          code: countryData.code,
           slug: countryData.slug,
           categoriesCount: countryData.visaCategories.length,
           hasImage: !!countryData.image,
@@ -323,7 +320,6 @@ export default function CountriesManager() {
     setEditingCountry(country)
     setFormData({
       name: country.name,
-      code: country.code,
       slug: country.slug || generateSlug(country.name),
       description: country.description,
       image: country.image || "",
@@ -372,7 +368,6 @@ export default function CountriesManager() {
     setImagePreview("")
     setFormData({
       name: "",
-      code: "",
       slug: "",
       description: "",
       image: "",
@@ -443,36 +438,23 @@ export default function CountriesManager() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="code">Country Code *</Label>
-                    <Input
-                      id="code"
-                      value={formData.code}
-                      onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                      placeholder="e.g., US, GB, CA"
-                      maxLength={3}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="currency">Default Currency *</Label>
-                    <Select
-                      value={formData.currency}
-                      onValueChange={(value) => setFormData({ ...formData, currency: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select currency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {currencies.map((currency) => (
-                          <SelectItem key={currency.code} value={currency.code}>
-                            {currency.symbol} {currency.code} - {currency.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div>
+                  <Label htmlFor="currency">Default Currency *</Label>
+                  <Select
+                    value={formData.currency}
+                    onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencies.map((currency) => (
+                        <SelectItem key={currency.code} value={currency.code}>
+                          {currency.symbol} {currency.code} - {currency.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -596,7 +578,6 @@ export default function CountriesManager() {
             <CardContent className="p-4">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-lg font-semibold">{country.name}</h3>
-                <span className="text-sm text-gray-500">{country.code}</span>
               </div>
 
               <p className="text-gray-600 text-sm mb-3 line-clamp-2">{country.description}</p>
