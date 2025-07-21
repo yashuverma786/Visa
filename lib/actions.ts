@@ -1,9 +1,10 @@
 "use server"
 
+import { connectToDatabase } from "@/lib/mongodb"
 import { revalidatePath } from "next/cache"
 
 export interface Task {
-  id: string
+  _id?: string
   title: string
   description: string
   completed: boolean
@@ -11,79 +12,162 @@ export interface Task {
   updatedAt: Date
 }
 
-// In-memory storage for demo purposes
-const tasks: Task[] = [
-  {
-    id: "1",
-    title: "Setup MongoDB Integration",
-    description: "Configure MongoDB connection and collections",
-    completed: true,
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01"),
-  },
-  {
-    id: "2",
-    title: "Implement User Authentication",
-    description: "Add login/logout functionality for admin panel",
-    completed: true,
-    createdAt: new Date("2024-01-02"),
-    updatedAt: new Date("2024-01-02"),
-  },
-  {
-    id: "3",
-    title: "Create Country Management",
-    description: "Build CRUD operations for countries and visa categories",
-    completed: false,
-    createdAt: new Date("2024-01-03"),
-    updatedAt: new Date("2024-01-03"),
-  },
-]
+export async function createTask(formData: FormData) {
+  try {
+    const { db } = await connectToDatabase()
 
-export async function getTasks(): Promise<Task[]> {
-  return tasks
-}
+    const title = formData.get("title") as string
+    const description = formData.get("description") as string
 
-export async function createTask(title: string, description: string): Promise<Task> {
-  const newTask: Task = {
-    id: Date.now().toString(),
-    title,
-    description,
-    completed: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    if (!title?.trim()) {
+      throw new Error("Title is required")
+    }
+
+    const taskData: Omit<Task, "_id"> = {
+      title: title.trim(),
+      description: description?.trim() || "",
+      completed: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+
+    const result = await db.collection("tasks").insertOne(taskData)
+
+    revalidatePath("/")
+
+    return {
+      success: true,
+      task: {
+        _id: result.insertedId.toString(),
+        ...taskData,
+      },
+    }
+  } catch (error) {
+    console.error("Error creating task:", error)
+    return {
+      success: false,
+      error: error.message || "Failed to create task",
+    }
   }
-
-  tasks.push(newTask)
-  revalidatePath("/")
-  return newTask
 }
 
-export async function updateTask(id: string, updates: Partial<Task>): Promise<Task | null> {
-  const taskIndex = tasks.findIndex((task) => task.id === id)
-  if (taskIndex === -1) return null
+export async function updateTask(id: string, formData: FormData) {
+  try {
+    const { db } = await connectToDatabase()
+    const { ObjectId } = require("mongodb")
 
-  tasks[taskIndex] = {
-    ...tasks[taskIndex],
-    ...updates,
-    updatedAt: new Date(),
+    const title = formData.get("title") as string
+    const description = formData.get("description") as string
+    const completed = formData.get("completed") === "true"
+
+    if (!title?.trim()) {
+      throw new Error("Title is required")
+    }
+
+    const updateData = {
+      title: title.trim(),
+      description: description?.trim() || "",
+      completed,
+      updatedAt: new Date(),
+    }
+
+    const result = await db.collection("tasks").updateOne({ _id: new ObjectId(id) }, { $set: updateData })
+
+    if (result.matchedCount === 0) {
+      throw new Error("Task not found")
+    }
+
+    revalidatePath("/")
+
+    return {
+      success: true,
+      message: "Task updated successfully",
+    }
+  } catch (error) {
+    console.error("Error updating task:", error)
+    return {
+      success: false,
+      error: error.message || "Failed to update task",
+    }
   }
-
-  revalidatePath("/")
-  return tasks[taskIndex]
 }
 
-export async function deleteTask(id: string): Promise<boolean> {
-  const taskIndex = tasks.findIndex((task) => task.id === id)
-  if (taskIndex === -1) return false
+export async function deleteTask(id: string) {
+  try {
+    const { db } = await connectToDatabase()
+    const { ObjectId } = require("mongodb")
 
-  tasks.splice(taskIndex, 1)
-  revalidatePath("/")
-  return true
+    const result = await db.collection("tasks").deleteOne({
+      _id: new ObjectId(id),
+    })
+
+    if (result.deletedCount === 0) {
+      throw new Error("Task not found")
+    }
+
+    revalidatePath("/")
+
+    return {
+      success: true,
+      message: "Task deleted successfully",
+    }
+  } catch (error) {
+    console.error("Error deleting task:", error)
+    return {
+      success: false,
+      error: error.message || "Failed to delete task",
+    }
+  }
 }
 
-export async function toggleTask(id: string): Promise<Task | null> {
-  const task = tasks.find((task) => task.id === id)
-  if (!task) return null
+export async function toggleTask(id: string) {
+  try {
+    const { db } = await connectToDatabase()
+    const { ObjectId } = require("mongodb")
 
-  return updateTask(id, { completed: !task.completed })
+    const task = await db.collection("tasks").findOne({ _id: new ObjectId(id) })
+
+    if (!task) {
+      throw new Error("Task not found")
+    }
+
+    const result = await db.collection("tasks").updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          completed: !task.completed,
+          updatedAt: new Date(),
+        },
+      },
+    )
+
+    revalidatePath("/")
+
+    return {
+      success: true,
+      message: "Task toggled successfully",
+    }
+  } catch (error) {
+    console.error("Error toggling task:", error)
+    return {
+      success: false,
+      error: error.message || "Failed to toggle task",
+    }
+  }
+}
+
+export async function getTasks() {
+  try {
+    const { db } = await connectToDatabase()
+
+    const tasks = await db.collection("tasks").find({}).sort({ createdAt: -1 }).toArray()
+
+    return tasks.map((task) => ({
+      ...task,
+      _id: task._id.toString(),
+    }))
+  } catch (error) {
+    console.error("Error fetching tasks:", error)
+    return []
+  }
 }

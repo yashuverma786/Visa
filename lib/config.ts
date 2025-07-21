@@ -7,31 +7,42 @@ export const config = {
   },
   database: {
     mongodb: {
-      uri: process.env.MONGODB_URI || "",
-      dbName: "visa_app",
+      uri: process.env.MONGODB_URI || "mongodb://localhost:27017/visa-app",
+      dbName: "visa-app",
+    },
+  },
+  auth: {
+    admin: {
+      username: process.env.ADMIN_USERNAME || "admin",
+      password: process.env.ADMIN_PASSWORD || "admin123",
+    },
+    session: {
+      secret: process.env.SESSION_SECRET || "your-secret-key",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     },
   },
   email: {
     smtp: {
-      host: process.env.SMTP_HOST || "",
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: Number.parseInt(process.env.SMTP_PORT || "587"),
       user: process.env.SMTP_USER || "",
       pass: process.env.SMTP_PASS || "",
     },
     from: {
       name: "JMT Travel",
-      address: process.env.SMTP_USER || "noreply@jmttravel.com",
+      email: process.env.SMTP_USER || "noreply@jmttravel.com",
     },
   },
-  admin: {
-    username: process.env.ADMIN_USERNAME || "admin",
-    password: process.env.ADMIN_PASSWORD || "admin123",
+  upload: {
+    maxSize: 5 * 1024 * 1024, // 5MB
+    allowedTypes: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+    destination: "/tmp/uploads",
   },
-  features: {
-    enableRegistration: true,
-    enableEmailNotifications: true,
-    enableFileUploads: true,
-    maxFileSize: 5 * 1024 * 1024, // 5MB
+  api: {
+    rateLimit: {
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+    },
   },
 }
 

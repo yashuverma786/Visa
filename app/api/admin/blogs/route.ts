@@ -1,15 +1,5 @@
 import { NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/mongodb"
-import { isAuthenticated } from "@/lib/auth"
-
-function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9 -]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim()
-}
 
 export async function GET() {
   try {
@@ -30,21 +20,23 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const authenticated = await isAuthenticated()
-    if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const body = await request.json()
     const { db } = await connectToDatabase()
+    const body = await request.json()
 
     // Validate required fields
-    if (!body.title || !body.content) {
-      return NextResponse.json({ error: "Title and content are required" }, { status: 400 })
+    if (!body.title || !body.content || !body.author) {
+      return NextResponse.json({ error: "Missing required fields: title, content, author" }, { status: 400 })
     }
 
-    // Generate slug if not provided
-    const slug = body.slug || generateSlug(body.title)
+    // Generate slug from title if not provided
+    const slug =
+      body.slug ||
+      body.title
+        .toLowerCase()
+        .replace(/[^a-z0-9 -]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .trim()
 
     // Check if slug already exists
     const existingBlog = await db.collection("blogs").findOne({ slug: slug })
@@ -55,12 +47,11 @@ export async function POST(request: Request) {
     const blogData = {
       title: body.title.trim(),
       slug: slug,
-      excerpt: body.excerpt || "",
+      excerpt: body.excerpt?.trim() || "",
       content: body.content.trim(),
-      author: body.author || "Admin",
+      author: body.author.trim(),
       tags: body.tags || [],
       featured: body.featured || false,
-      image: body.image || "",
       publishedAt: body.publishedAt ? new Date(body.publishedAt) : new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),

@@ -1,4 +1,3 @@
-import { cookies } from "next/headers"
 import type { NextRequest } from "next/server"
 
 // Admin credentials (in production, use environment variables)
@@ -11,53 +10,40 @@ export function validateAdminCredentials(username: string, password: string): bo
   return username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password
 }
 
-export async function setAdminSession(): Promise<void> {
-  const cookieStore = await cookies()
-  cookieStore.set("admin-session", "authenticated", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 60 * 60 * 24, // 24 hours
-  })
+export function setAdminSession(): string {
+  // In a real app, you'd use JWT or a proper session management system
+  const sessionToken = Buffer.from(`${Date.now()}-admin-session`).toString("base64")
+  return sessionToken
 }
 
-export async function clearAdminSession(): Promise<void> {
-  const cookieStore = await cookies()
-  cookieStore.delete("admin-session")
+export function clearAdminSession(): void {
+  // Clear session logic would go here
+  // For now, we'll just return void since we're using simple token validation
 }
 
-export async function isAuthenticated(): Promise<boolean> {
+export function isAdminAuthenticated(sessionToken?: string): boolean {
+  if (!sessionToken) return false
+
   try {
-    const cookieStore = await cookies()
-    const session = cookieStore.get("admin-session")
-    return session?.value === "authenticated"
-  } catch (error) {
-    console.error("Error checking authentication:", error)
-    return false
-  }
-}
-
-export function isAdminAuthenticated(): boolean {
-  try {
-    // This is a synchronous version for client-side checks
-    return true // Simplified for now
-  } catch (error) {
+    // Simple validation - in production use proper JWT validation
+    const decoded = Buffer.from(sessionToken, "base64").toString()
+    return decoded.includes("admin-session")
+  } catch {
     return false
   }
 }
 
 export function checkAdminAuth(request: NextRequest): boolean {
-  try {
-    const session = request.cookies.get("admin-session")
-    return session?.value === "authenticated"
-  } catch (error) {
-    return false
-  }
+  const sessionToken = request.cookies.get("admin-session")?.value
+  return isAdminAuthenticated(sessionToken)
 }
 
-export async function requireAuth(): Promise<void> {
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
+export async function isAuthenticated(sessionToken?: string): Promise<boolean> {
+  return isAdminAuthenticated(sessionToken)
+}
+
+export function requireAuth(sessionToken?: string): void {
+  if (!isAdminAuthenticated(sessionToken)) {
     throw new Error("Authentication required")
   }
 }

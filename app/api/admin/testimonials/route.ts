@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/mongodb"
-import { isAuthenticated } from "@/lib/auth"
 
 export async function GET() {
   try {
@@ -21,16 +20,20 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const authenticated = await isAuthenticated()
-    if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const { db } = await connectToDatabase()
+    const body = await request.json()
+
+    if (!body.name || !body.content || !body.rating) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    const body = await request.json()
-    const { db } = await connectToDatabase()
-
     const testimonialData = {
-      ...body,
+      name: body.name.trim(),
+      content: body.content.trim(),
+      rating: Number(body.rating),
+      country: body.country?.trim() || "",
+      image: body.image || "",
+      featured: body.featured || false,
       createdAt: new Date(),
       updatedAt: new Date(),
     }

@@ -6,18 +6,29 @@ export async function POST(request: Request) {
     const { username, password } = await request.json()
 
     if (!username || !password) {
-      return NextResponse.json({ error: "Username and password are required" }, { status: 400 })
+      return NextResponse.json({ error: "Username and password required" }, { status: 400 })
     }
 
-    const isValid = validateAdminCredentials(username, password)
+    if (validateAdminCredentials(username, password)) {
+      const sessionToken = setAdminSession()
 
-    if (!isValid) {
+      const response = NextResponse.json({
+        success: true,
+        message: "Login successful",
+      })
+
+      // Set HTTP-only cookie
+      response.cookies.set("admin-session", sessionToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      })
+
+      return response
+    } else {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
-
-    await setAdminSession()
-
-    return NextResponse.json({ message: "Login successful" })
   } catch (error) {
     console.error("Login error:", error)
     return NextResponse.json({ error: "Login failed" }, { status: 500 })
