@@ -6,6 +6,7 @@ export async function GET() {
   try {
     const { db } = await connectToDatabase()
 
+    // Fetch all countries
     const countries = await db.collection<Country>("countries").find({}).sort({ name: 1 }).toArray()
 
     // Convert MongoDB _id to string and ensure proper structure

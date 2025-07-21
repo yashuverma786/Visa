@@ -1,167 +1,137 @@
-import type { Metadata } from "next"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Briefcase, Camera, Heart, GraduationCap, Plane, Users } from "lucide-react"
+import { Plane, Briefcase, GraduationCap, Users, Heart, Clock } from "lucide-react"
 import Link from "next/link"
-
-export const metadata: Metadata = {
-  title: "Visa Types - Tourist, Business & Family Visit Visas",
-  description:
-    "Explore different types of visas including tourist, business, family visit, student, and transit visas. Expert guidance for all visa categories.",
-}
 
 const visaTypes = [
   {
-    icon: Camera,
+    icon: Plane,
     title: "Tourist Visa",
-    description: "Perfect for leisure travel, sightseeing, and vacation trips",
-    features: [
-      "Single or multiple entry options",
-      "Validity up to 10 years",
-      "Quick processing time",
-      "Tourism and recreation purposes",
-    ],
-    duration: "15-30 days processing",
-    price: "Starting from ₹5,000",
+    description: "Perfect for leisure travel, sightseeing, and visiting friends or family.",
+    features: ["Multiple entry options", "Flexible duration", "Quick processing"],
+    countries: ["USA", "UK", "Canada", "Australia", "Schengen"],
+    color: "bg-blue-500",
   },
   {
     icon: Briefcase,
     title: "Business Visa",
-    description: "For business meetings, conferences, and commercial activities",
-    features: [
-      "Business meetings and conferences",
-      "Trade and commercial activities",
-      "Multiple entry facility",
-      "Extended validity options",
-    ],
-    duration: "10-20 days processing",
-    price: "Starting from ₹8,000",
-  },
-  {
-    icon: Heart,
-    title: "Family Visit Visa",
-    description: "Visit family members and relatives living abroad",
-    features: [
-      "Visit family and relatives",
-      "Attend family functions",
-      "Medical treatment visits",
-      "Flexible duration options",
-    ],
-    duration: "15-25 days processing",
-    price: "Starting from ₹6,000",
+    description: "Ideal for business meetings, conferences, and professional visits.",
+    features: ["Fast-track processing", "Multiple entries", "Extended validity"],
+    countries: ["USA", "UK", "Canada", "Singapore", "UAE"],
+    color: "bg-green-500",
   },
   {
     icon: GraduationCap,
     title: "Student Visa",
-    description: "For educational purposes and academic programs",
-    features: ["Study abroad programs", "University admissions", "Research and academic work", "Long-term validity"],
-    duration: "20-40 days processing",
-    price: "Starting from ₹10,000",
-  },
-  {
-    icon: Plane,
-    title: "Transit Visa",
-    description: "For travelers passing through a country to reach their destination",
-    features: ["Airport transit facility", "Short-term validity", "Quick processing", "Connecting flights"],
-    duration: "5-10 days processing",
-    price: "Starting from ₹3,000",
+    description: "For pursuing education, research, or academic programs abroad.",
+    features: ["Study permit included", "Work authorization", "Long-term validity"],
+    countries: ["USA", "UK", "Canada", "Australia", "Germany"],
+    color: "bg-purple-500",
   },
   {
     icon: Users,
-    title: "Group Visa",
-    description: "Special visa arrangements for group travel and tours",
-    features: ["Group tour packages", "Bulk processing discounts", "Coordinated applications", "Group travel benefits"],
-    duration: "15-30 days processing",
-    price: "Contact for group rates",
+    title: "Family Visa",
+    description: "Reunite with family members or join your spouse abroad.",
+    features: ["Family reunification", "Dependent visas", "Permanent options"],
+    countries: ["USA", "UK", "Canada", "Australia", "New Zealand"],
+    color: "bg-pink-500",
+  },
+  {
+    icon: Heart,
+    title: "Medical Visa",
+    description: "For medical treatment, procedures, or health consultations.",
+    features: ["Emergency processing", "Attendant visas", "Medical support"],
+    countries: ["USA", "UK", "Germany", "Singapore", "Thailand"],
+    color: "bg-red-500",
+  },
+  {
+    icon: Clock,
+    title: "Transit Visa",
+    description: "For short layovers and connecting flights through a country.",
+    features: ["Quick approval", "Short duration", "Airport transit"],
+    countries: ["UK", "Schengen", "Canada", "Australia", "UAE"],
+    color: "bg-orange-500",
   },
 ]
 
 export default function VisaTypesPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Types of Visas We Process</h1>
-          <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-            Choose from our comprehensive range of visa services tailored to your specific travel needs
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="container mx-auto px-4">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Visa Types & Services</h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            We provide comprehensive visa services for all types of travel purposes. Choose the visa type that matches
+            your travel needs.
           </p>
         </div>
-      </section>
 
-      {/* Visa Types Grid */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {visaTypes.map((visa, index) => (
+        {/* Visa Types Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          {visaTypes.map((visa, index) => {
+            const IconComponent = visa.icon
+            return (
               <Card key={index} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="flex items-center mb-4">
-                    <div className="bg-blue-100 p-3 rounded-lg">
-                      <visa.icon className="h-8 w-8 text-blue-600" />
-                    </div>
-                    <CardTitle className="text-xl ml-4">{visa.title}</CardTitle>
+                  <div className={`w-12 h-12 ${visa.color} rounded-lg flex items-center justify-center mb-4`}>
+                    <IconComponent className="h-6 w-6 text-white" />
                   </div>
-                  <p className="text-gray-600">{visa.description}</p>
+                  <CardTitle className="text-xl">{visa.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-2">Features:</h4>
-                      <ul className="space-y-1">
-                        {visa.features.map((feature, idx) => (
-                          <li key={idx} className="text-sm text-gray-600 flex items-center">
-                            <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  <p className="text-gray-600 mb-4">{visa.description}</p>
 
-                    <div className="grid grid-cols-1 gap-2">
-                      <div className="text-sm">
-                        <span className="font-semibold">Processing Time:</span>
-                        <span className="text-gray-600 ml-1">{visa.duration}</span>
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-semibold">Price:</span>
-                        <span className="text-green-600 ml-1 font-semibold">{visa.price}</span>
-                      </div>
-                    </div>
-
-                    <Button asChild className="w-full">
-                      <Link href="/visa-assistance">Apply Now</Link>
-                    </Button>
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-2">Key Features:</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      {visa.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center">
+                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></span>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
+
+                  <div className="mb-6">
+                    <h4 className="font-semibold mb-2">Popular Destinations:</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {visa.countries.map((country, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {country}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button asChild className="w-full">
+                    <Link href="/countries">Explore Countries</Link>
+                  </Button>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            )
+          })}
         </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="bg-blue-600 text-white py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">Not Sure Which Visa Type You Need?</h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Our visa experts are here to help you choose the right visa type for your travel needs
+        {/* CTA Section */}
+        <div className="bg-white rounded-lg p-8 text-center shadow-sm">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Need Help Choosing the Right Visa?</h2>
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            Our visa experts are here to help you determine the best visa type for your specific needs and guide you
+            through the entire application process.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/visa-assistance">Get Expert Consultation</Link>
+            <Button asChild size="lg">
+              <Link href="/contact">Get Expert Consultation</Link>
             </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="text-white border-white hover:bg-white hover:text-blue-600"
-            >
-              <Link href="/contact">Contact Us</Link>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/countries">Browse All Countries</Link>
             </Button>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   )
 }

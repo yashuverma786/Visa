@@ -1,15 +1,18 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
+import { clearAdminSession } from "@/lib/auth"
 
-export async function POST() {
-  const response = NextResponse.json({ success: true })
+export async function POST(request: NextRequest) {
+  try {
+    clearAdminSession()
 
-  // Clear the admin session cookie
-  response.cookies.set("admin-session", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 0,
-    path: "/",
-  })
+    const response = NextResponse.json({ success: true, message: "Logout successful" })
 
-  return response
+    // Clear session cookie
+    response.cookies.delete("admin_session")
+
+    return response
+  } catch (error) {
+    console.error("Logout error:", error)
+    return NextResponse.json({ error: "Logout failed" }, { status: 500 })
+  }
 }

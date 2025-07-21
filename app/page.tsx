@@ -1,4 +1,3 @@
-import { Suspense } from "react"
 import HeroSection from "@/components/home/hero-section"
 import FeaturesSection from "@/components/home/features-section"
 import CountriesPreview from "@/components/home/countries-preview"
@@ -7,16 +6,12 @@ import CTASection from "@/components/home/cta-section"
 
 export default function HomePage() {
   return (
-    <>
+    <main className="min-h-screen">
       <HeroSection />
       <FeaturesSection />
-      <Suspense fallback={<div className="py-20 text-center">Loading countries...</div>}>
-        <CountriesPreview />
-      </Suspense>
-      <Suspense fallback={<div className="py-20 text-center">Loading testimonials...</div>}>
-        <TestimonialsSection />
-      </Suspense>
+      <CountriesPreview />
+      <TestimonialsSection />
       <CTASection />
-    </>
+    </main>
   )
 }

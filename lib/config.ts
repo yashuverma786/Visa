@@ -1,28 +1,30 @@
 export const config = {
-  mongodb: {
-    uri: process.env.MONGODB_URI,
-    isAvailable: !!process.env.MONGODB_URI,
+  app: {
+    name: "JMT Travel - Visa Services",
+    description: "Professional visa assistance and travel services",
+    url: process.env.NEXT_PUBLIC_DOMAIN || "http://localhost:3000",
+  },
+  database: {
+    mongodb: {
+      uri: process.env.MONGODB_URI || "mongodb://localhost:27017/visa-app",
+    },
   },
   email: {
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number.parseInt(process.env.SMTP_PORT || "587"),
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-    isAvailable: !!(process.env.SMTP_USER && process.env.SMTP_PASS),
+    smtp: {
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: Number.parseInt(process.env.SMTP_PORT || "587"),
+      user: process.env.SMTP_USER || "",
+      pass: process.env.SMTP_PASS || "",
+    },
   },
-  app: {
-    name: "JMT Travel",
-    domain: process.env.NEXT_PUBLIC_DOMAIN || "https://visaa.in",
-    supportEmail: "visa@journeymytrip.com",
+  admin: {
+    username: process.env.ADMIN_USERNAME || "admin",
+    password: process.env.ADMIN_PASSWORD || "admin123",
+  },
+  upload: {
+    maxFileSize: 5 * 1024 * 1024, // 5MB
+    allowedTypes: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
   },
 }
 
-export function getBaseUrl() {
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`
-  }
-  if (process.env.NEXT_PUBLIC_DOMAIN) {
-    return process.env.NEXT_PUBLIC_DOMAIN
-  }
-  return "http://localhost:3000"
-}
+export default config

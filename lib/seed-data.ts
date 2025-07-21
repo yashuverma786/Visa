@@ -1,286 +1,295 @@
-import type { Country } from "./types"
+import type { Country, Testimonial, BlogPost } from "@/lib/types"
 
-export const sampleCountries: Omit<Country, "_id">[] = [
+export const sampleCountries: Country[] = [
   {
+    _id: "sample_usa",
     name: "United States",
-    code: "US",
-    image: "/placeholder.svg?height=300&width=400",
-    description: "Experience the land of opportunities with diverse landscapes and vibrant cities.",
+    slug: "usa",
+    description:
+      "Get your US visa with our expert assistance. We handle all types of US visas including tourist, business, student, and work visas.",
+    image: "/placeholder.svg?height=300&width=400&text=USA+Flag",
+    currency: "USD",
     visaCategories: [
       {
-        id: "us-tourist",
+        id: "us_tourist",
         name: "Tourist Visa (B-2)",
         type: "Tourist",
-        price: 15000,
+        price: 185,
+        currency: "USD",
         processingTime: "15-30 days",
         validity: "Up to 10 years",
         entries: "Multiple",
         requiredDocuments: [
-          "Valid Passport (minimum 6 months validity)",
-          "Passport Size Photos (2 pieces, 51mm x 51mm)",
-          "DS-160 Form (completed online)",
-          "Bank Statements (last 6 months)",
-          "Employment Letter with salary details",
-          "Travel Itinerary",
-          "Hotel Bookings",
-          "Income Tax Returns (last 3 years)",
+          "Valid passport",
+          "DS-160 form",
+          "Passport photos",
+          "Bank statements",
+          "Employment letter",
+          "Travel itinerary",
         ],
         processSteps: [
-          "Fill DS-160 form online at ceac.state.gov",
-          "Pay visa application fee ($185)",
-          "Schedule visa interview appointment",
-          "Gather all required documents",
-          "Attend visa interview at US Consulate",
-          "Submit biometric information",
-          "Wait for visa processing",
-          "Collect passport with visa stamp",
+          "Fill DS-160 form online",
+          "Pay visa fee",
+          "Schedule interview",
+          "Attend embassy interview",
+          "Receive passport with visa",
         ],
         eligibility: [
-          "Purpose of travel is tourism/vacation",
-          "Sufficient funds to cover expenses",
+          "Valid passport with 6+ months validity",
+          "Sufficient funds for travel",
           "Strong ties to home country",
-          "No intention to immigrate",
+          "No criminal record",
         ],
-        additionalInfo: "B-2 visa allows tourism, visiting family/friends, and medical treatment.",
+        additionalInfo: "Interview required for most applicants",
       },
       {
-        id: "us-business",
+        id: "us_business",
         name: "Business Visa (B-1)",
         type: "Business",
-        price: 18000,
+        price: 185,
+        currency: "USD",
         processingTime: "15-30 days",
         validity: "Up to 10 years",
         entries: "Multiple",
         requiredDocuments: [
-          "Valid Passport (minimum 6 months validity)",
-          "DS-160 Form (completed online)",
-          "Business invitation letter from US company",
-          "Company registration documents",
-          "Bank Statements (last 6 months)",
-          "Employment Letter",
-          "Business license",
-          "Conference/meeting details",
+          "Valid passport",
+          "DS-160 form",
+          "Business invitation letter",
+          "Company registration",
+          "Bank statements",
+          "Employment verification",
         ],
         processSteps: [
-          "Receive invitation from US business partner",
-          "Fill DS-160 form online",
-          "Pay visa application fee",
-          "Schedule interview appointment",
-          "Prepare business documentation",
-          "Attend visa interview",
-          "Submit biometric information",
-          "Collect passport with visa",
+          "Obtain invitation from US company",
+          "Fill DS-160 form",
+          "Pay visa fee",
+          "Schedule interview",
+          "Attend embassy interview",
         ],
         eligibility: [
-          "Legitimate business purpose",
+          "Valid business purpose",
           "Invitation from US company",
-          "Sufficient business ties",
-          "No intention to work in US",
+          "Sufficient funds",
+          "Intent to return home",
         ],
-        additionalInfo: "B-1 visa for business meetings, conferences, and negotiations.",
+        additionalInfo: "Business meetings, conferences, and negotiations allowed",
       },
     ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
   {
+    _id: "sample_uk",
     name: "United Kingdom",
-    code: "GB",
-    image: "/placeholder.svg?height=300&width=400",
-    description: "Explore the rich history and culture of England, Scotland, Wales, and Northern Ireland.",
+    slug: "uk",
+    description: "UK visa services for tourism, business, study, and work. Expert guidance for all UK visa categories.",
+    image: "/placeholder.svg?height=300&width=400&text=UK+Flag",
+    currency: "GBP",
     visaCategories: [
       {
-        id: "uk-tourist",
+        id: "uk_tourist",
         name: "Standard Visitor Visa",
         type: "Tourist",
-        price: 12000,
+        price: 115,
+        currency: "GBP",
         processingTime: "15-20 days",
         validity: "6 months",
         entries: "Multiple",
         requiredDocuments: [
-          "Valid Passport",
-          "Passport Size Photos",
-          "Bank Statements (last 6 months)",
-          "Employment Letter",
-          "Travel Itinerary",
-          "Accommodation Proof",
-          "Travel Insurance",
-          "Sponsor Documents (if applicable)",
+          "Valid passport",
+          "Online application form",
+          "Passport photos",
+          "Bank statements",
+          "Travel itinerary",
+          "Accommodation proof",
         ],
         processSteps: [
-          "Apply online at gov.uk",
-          "Pay visa application fee",
+          "Complete online application",
+          "Pay visa fee",
           "Book biometric appointment",
           "Attend biometric appointment",
-          "Submit supporting documents",
-          "Wait for decision",
-          "Collect passport",
+          "Receive decision",
         ],
-        eligibility: [
-          "Tourism or visiting family/friends",
-          "Sufficient funds for stay",
-          "Genuine intention to leave UK",
-          "No public funds required",
-        ],
-        additionalInfo: "Standard Visitor visa for tourism and family visits.",
+        eligibility: ["Genuine visitor", "Sufficient funds", "Intent to leave UK", "No work allowed"],
+        additionalInfo: "Tourism, business meetings, and short courses allowed",
       },
     ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
   {
+    _id: "sample_canada",
     name: "Canada",
-    code: "CA",
-    image: "/placeholder.svg?height=300&width=400",
-    description: "Discover the natural beauty and multicultural cities of Canada.",
+    slug: "canada",
+    description:
+      "Canadian visa assistance for visitors, students, and workers. Professional guidance for all Canadian immigration programs.",
+    image: "/placeholder.svg?height=300&width=400&text=Canada+Flag",
+    currency: "CAD",
     visaCategories: [
       {
-        id: "ca-tourist",
-        name: "Temporary Resident Visa",
+        id: "canada_tourist",
+        name: "Visitor Visa (TRV)",
         type: "Tourist",
-        price: 8000,
+        price: 100,
+        currency: "CAD",
         processingTime: "20-30 days",
         validity: "Up to 10 years",
         entries: "Multiple",
         requiredDocuments: [
-          "Valid Passport",
-          "Passport Size Photos",
-          "Bank Statements",
-          "Employment Letter",
-          "Travel Itinerary",
-          "Purpose of Visit Letter",
-          "Invitation Letter (if applicable)",
-          "Travel Insurance",
+          "Valid passport",
+          "Application form",
+          "Passport photos",
+          "Financial proof",
+          "Travel itinerary",
+          "Invitation letter (if applicable)",
         ],
         processSteps: [
-          "Apply online or on paper",
-          "Pay application fees",
+          "Complete application online",
+          "Pay fees",
           "Submit biometrics",
-          "Submit supporting documents",
           "Wait for processing",
-          "Receive passport with visa",
+          "Receive passport request",
         ],
-        eligibility: ["Temporary visit purpose", "Sufficient funds", "No criminal record", "Good health"],
-        additionalInfo: "Temporary Resident Visa for tourism and business visits.",
+        eligibility: ["Valid travel document", "Good health", "No criminal record", "Sufficient funds"],
+        additionalInfo: "May require medical exam and police certificate",
       },
     ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+]
+
+export const sampleTestimonials: Testimonial[] = [
+  {
+    _id: "testimonial_1",
+    name: "Rajesh Kumar",
+    content:
+      "Excellent service! Got my US tourist visa approved in just 20 days. The team was very professional and guided me through every step.",
+    country: "India",
+    rating: 5,
+    image: "/placeholder.svg?height=100&width=100&text=RK",
+    isApproved: true,
+    createdAt: new Date("2024-01-15"),
+    updatedAt: new Date("2024-01-15"),
   },
   {
-    name: "Australia",
-    code: "AU",
-    image: "/placeholder.svg?height=300&width=400",
-    description: "Experience the unique wildlife and stunning landscapes of Australia.",
-    visaCategories: [
-      {
-        id: "au-tourist",
-        name: "Visitor Visa (Subclass 600)",
-        type: "Tourist",
-        price: 10000,
-        processingTime: "15-25 days",
-        validity: "12 months",
-        entries: "Multiple",
-        requiredDocuments: [
-          "Valid Passport",
-          "Passport Size Photos",
-          "Bank Statements",
-          "Employment Letter",
-          "Travel Insurance",
-          "Health Insurance",
-          "Character Documents",
-          "Travel Itinerary",
-        ],
-        processSteps: [
-          "Apply online via ImmiAccount",
-          "Pay application fee",
-          "Submit documents",
-          "Health examination (if required)",
-          "Wait for decision",
-          "Receive visa grant notification",
-        ],
-        eligibility: [
-          "Tourism or business visitor",
-          "Sufficient funds",
-          "Health requirements met",
-          "Character requirements met",
-        ],
-        additionalInfo: "Visitor visa for tourism and short business visits.",
-      },
-    ],
+    _id: "testimonial_2",
+    name: "Priya Sharma",
+    content:
+      "Amazing experience with JMT Travel. They helped me get my UK student visa without any hassle. Highly recommended!",
+    country: "India",
+    rating: 5,
+    image: "/placeholder.svg?height=100&width=100&text=PS",
+    isApproved: true,
+    createdAt: new Date("2024-01-10"),
+    updatedAt: new Date("2024-01-10"),
   },
   {
-    name: "Germany",
-    code: "DE",
-    image: "/placeholder.svg?height=300&width=400",
-    description: "Explore the heart of Europe with its rich history and modern cities.",
-    visaCategories: [
-      {
-        id: "de-tourist",
-        name: "Schengen Tourist Visa",
-        type: "Tourist",
-        price: 7000,
-        processingTime: "10-15 days",
-        validity: "90 days",
-        entries: "Multiple",
-        requiredDocuments: [
-          "Valid Passport",
-          "Passport Size Photos",
-          "Travel Insurance (minimum €30,000)",
-          "Bank Statements",
-          "Flight Reservations",
-          "Hotel Bookings",
-          "Employment Certificate",
-          "Cover Letter",
-        ],
-        processSteps: [
-          "Book appointment at German Consulate",
-          "Fill Schengen visa application form",
-          "Gather required documents",
-          "Attend appointment",
-          "Submit biometrics and documents",
-          "Pay visa fee",
-          "Collect passport",
-        ],
-        eligibility: [
-          "Tourism purpose",
-          "Sufficient financial means",
-          "Valid travel insurance",
-          "Return ticket booked",
-        ],
-        additionalInfo: "Schengen visa valid for 26 European countries.",
-      },
-    ],
+    _id: "testimonial_3",
+    name: "Mohammed Ali",
+    content:
+      "Professional and reliable service. Got my Canada visitor visa approved quickly. Thank you JMT Travel team!",
+    country: "Pakistan",
+    rating: 5,
+    image: "/placeholder.svg?height=100&width=100&text=MA",
+    isApproved: true,
+    createdAt: new Date("2024-01-05"),
+    updatedAt: new Date("2024-01-05"),
+  },
+]
+
+export const sampleBlogPosts: BlogPost[] = [
+  {
+    _id: "blog_1",
+    title: "Complete Guide to US Tourist Visa Application",
+    slug: "us-tourist-visa-guide",
+    excerpt:
+      "Everything you need to know about applying for a US B-2 tourist visa, including requirements, process, and tips for approval.",
+    content: `
+# Complete Guide to US Tourist Visa Application
+
+Getting a US tourist visa can seem daunting, but with proper preparation and guidance, the process becomes much more manageable. This comprehensive guide will walk you through everything you need to know.
+
+## What is a US Tourist Visa?
+
+The B-2 tourist visa allows foreign nationals to visit the United States temporarily for tourism, vacation, or visiting family and friends.
+
+## Requirements
+
+- Valid passport with at least 6 months validity
+- Completed DS-160 form
+- Visa application fee payment
+- Passport-style photographs
+- Supporting documents
+
+## Application Process
+
+1. **Complete DS-160 Form**: Fill out the online application form
+2. **Pay Visa Fee**: Pay the required fee online
+3. **Schedule Interview**: Book your embassy appointment
+4. **Prepare Documents**: Gather all required paperwork
+5. **Attend Interview**: Visit the US embassy or consulate
+
+## Tips for Success
+
+- Be honest and consistent in your application
+- Demonstrate strong ties to your home country
+- Show sufficient financial resources
+- Prepare for the interview thoroughly
+
+Contact JMT Travel for expert assistance with your US visa application!
+    `,
+    image: "/placeholder.svg?height=400&width=600&text=US+Visa+Guide",
+    author: "JMT Travel Team",
+    tags: ["USA", "Tourist Visa", "B-2 Visa", "Travel"],
+    isPublished: true,
+    createdAt: new Date("2024-01-20"),
+    updatedAt: new Date("2024-01-20"),
   },
   {
-    name: "Japan",
-    code: "JP",
-    image: "/placeholder.svg?height=300&width=400",
-    description: "Experience the perfect blend of traditional culture and modern technology.",
-    visaCategories: [
-      {
-        id: "jp-tourist",
-        name: "Tourist Visa",
-        type: "Tourist",
-        price: 6000,
-        processingTime: "5-10 days",
-        validity: "90 days",
-        entries: "Single",
-        requiredDocuments: [
-          "Valid Passport",
-          "Passport Size Photos",
-          "Visa Application Form",
-          "Bank Statements",
-          "Travel Itinerary",
-          "Employment Certificate",
-          "Hotel Reservations",
-          "Return Flight Tickets",
-        ],
-        processSteps: [
-          "Fill visa application form",
-          "Gather required documents",
-          "Submit at Japanese Consulate",
-          "Pay visa fee",
-          "Wait for processing",
-          "Collect passport with visa",
-        ],
-        eligibility: ["Tourism purpose only", "Sufficient funds", "Return ticket confirmed", "No work intention"],
-        additionalInfo: "Tourist visa for short-term visits up to 90 days.",
-      },
-    ],
+    _id: "blog_2",
+    title: "UK Visa Requirements for Indian Citizens",
+    slug: "uk-visa-requirements-indian-citizens",
+    excerpt:
+      "Detailed information about UK visa requirements specifically for Indian passport holders, including documents and process.",
+    content: `
+# UK Visa Requirements for Indian Citizens
+
+Indian citizens planning to visit the UK need to understand the specific requirements and process for obtaining a UK visa.
+
+## Types of UK Visas
+
+- Standard Visitor Visa
+- Student Visa
+- Work Visa
+- Family Visa
+
+## Required Documents
+
+- Valid Indian passport
+- Completed online application
+- Biometric information
+- Financial documents
+- Travel itinerary
+
+## Processing Time
+
+Standard processing time is 15-20 working days, with priority services available for faster processing.
+
+## Common Reasons for Rejection
+
+- Insufficient funds
+- Incomplete documentation
+- Lack of travel history
+- Unclear purpose of visit
+
+Let JMT Travel help you navigate the UK visa process successfully!
+    `,
+    image: "/placeholder.svg?height=400&width=600&text=UK+Visa+Requirements",
+    author: "Visa Expert",
+    tags: ["UK", "Visa Requirements", "Indian Citizens", "Travel"],
+    isPublished: true,
+    createdAt: new Date("2024-01-18"),
+    updatedAt: new Date("2024-01-18"),
   },
 ]

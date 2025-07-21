@@ -1,131 +1,180 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { RefreshCw, Database, Mail, Cloud, Settings } from "lucide-react"
+
+interface DebugInfo {
+  timestamp: string
+  environment: string
+  domain: string
+  mongodb: string
+  smtp: {
+    host: string
+    user: string
+    pass: string
+  }
+  blob: string
+}
 
 export default function DebugPage() {
-  const [debugInfo, setDebugInfo] = useState<any>(null)
-  const [emailTest, setEmailTest] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const runDebug = async () => {
-    setLoading(true)
+  const fetchDebugInfo = async () => {
     try {
+      setLoading(true)
+      setError(null)
       const response = await fetch("/api/debug")
-      const data = await response.json()
-      setDebugInfo(data)
-    } catch (error) {
-      setDebugInfo({ error: "Failed to fetch debug info" })
+      if (response.ok) {
+        const data = await response.json()
+        setDebugInfo(data)
+      } else {
+        setError("Failed to fetch debug information")
+      }
+    } catch (err) {
+      setError("Error fetching debug information")
+      console.error("Debug fetch error:", err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
-  const testEmail = async () => {
-    setLoading(true)
-    try {
-      const response = await fetch("/api/test-email", { method: "POST" })
-      const data = await response.json()
-      setEmailTest(data)
-    } catch (error) {
-      setEmailTest({ error: "Failed to test email" })
-    }
-    setLoading(false)
+  useEffect(() => {
+    fetchDebugInfo()
+  }, [])
+
+  const getStatusBadge = (status: string) => {
+    return status === "configured" ? (
+      <Badge className="bg-green-100 text-green-800">Configured</Badge>
+    ) : (
+      <Badge variant="destructive">Not Configured</Badge>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="flex items-center justify-center">
+          <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+          Loading debug information...
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center text-red-600">
+              <p>{error}</p>
+              <Button onClick={fetchDebugInfo} className="mt-4">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Debug Information</h1>
+    <div className="container mx-auto py-8 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">System Debug Information</h1>
+        <Button onClick={fetchDebugInfo} variant="outline">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
 
-        <div className="space-y-6">
+      {debugInfo && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>System Debug</CardTitle>
+              <CardTitle className="flex items-center">
+                <Settings className="h-5 w-5 mr-2" />
+                Environment
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <Button onClick={runDebug} disabled={loading} className="mb-4">
-                {loading ? "Running..." : "Run Debug Check"}
-              </Button>
-
-              {debugInfo && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Database Status</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Badge variant={debugInfo.database?.available ? "default" : "destructive"}>
-                          {debugInfo.database?.available ? "Connected" : "Disconnected"}
-                        </Badge>
-                      </div>
-                      <div>
-                        <Badge variant={debugInfo.database?.configured ? "default" : "destructive"}>
-                          {debugInfo.database?.configured ? "Configured" : "Not Configured"}
-                        </Badge>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-2">URI: {debugInfo.database?.uri_preview || "Not set"}</p>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Email Status</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Badge variant={debugInfo.email?.configured ? "default" : "destructive"}>
-                          {debugInfo.email?.configured ? "Configured" : "Not Configured"}
-                        </Badge>
-                      </div>
-                      <div>
-                        <p className="text-sm">Host: {debugInfo.email?.smtp_host}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Countries Data</h3>
-                    <p>Total Countries: {debugInfo.countries?.count || 0}</p>
-                    {debugInfo.countries?.sample && (
-                      <div className="mt-2">
-                        <h4 className="text-sm font-medium">Sample Countries:</h4>
-                        {debugInfo.countries.sample.map((country: any, index: number) => (
-                          <div key={index} className="text-sm text-gray-600">
-                            {country.name} ({country.code}) - {country.categories} categories
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <pre className="bg-gray-100 p-4 rounded text-xs overflow-auto">
-                    {JSON.stringify(debugInfo, null, 2)}
-                  </pre>
-                </div>
-              )}
+            <CardContent className="space-y-3">
+              <div className="flex justify-between">
+                <span>Environment:</span>
+                <Badge variant={debugInfo.environment === "production" ? "default" : "secondary"}>
+                  {debugInfo.environment}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span>Domain:</span>
+                <span className="text-sm text-gray-600">{debugInfo.domain}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Timestamp:</span>
+                <span className="text-sm text-gray-600">{new Date(debugInfo.timestamp).toLocaleString()}</span>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Email Test</CardTitle>
+              <CardTitle className="flex items-center">
+                <Database className="h-5 w-5 mr-2" />
+                Database
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <Button onClick={testEmail} disabled={loading} className="mb-4">
-                {loading ? "Sending..." : "Send Test Email"}
-              </Button>
+              <div className="flex justify-between">
+                <span>MongoDB:</span>
+                {getStatusBadge(debugInfo.mongodb)}
+              </div>
+            </CardContent>
+          </Card>
 
-              {emailTest && (
-                <div>
-                  <Badge variant={emailTest.success ? "default" : "destructive"}>
-                    {emailTest.success ? "Success" : "Failed"}
-                  </Badge>
-                  <p className="text-sm mt-2">{emailTest.message || emailTest.error}</p>
-                </div>
-              )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Mail className="h-5 w-5 mr-2" />
+                Email Configuration
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between">
+                <span>SMTP Host:</span>
+                {getStatusBadge(debugInfo.smtp.host)}
+              </div>
+              <div className="flex justify-between">
+                <span>SMTP User:</span>
+                {getStatusBadge(debugInfo.smtp.user)}
+              </div>
+              <div className="flex justify-between">
+                <span>SMTP Password:</span>
+                {getStatusBadge(debugInfo.smtp.pass)}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Cloud className="h-5 w-5 mr-2" />
+                Storage
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between">
+                <span>Blob Storage:</span>
+                {getStatusBadge(debugInfo.blob)}
+              </div>
             </CardContent>
           </Card>
         </div>
-      </div>
+      )}
     </div>
   )
 }

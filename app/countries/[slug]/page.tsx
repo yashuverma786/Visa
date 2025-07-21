@@ -25,18 +25,11 @@ async function getCountryBySlug(slug: string) {
   }
 
   // Fallback to sample data by matching slug
-  const sampleCountry = sampleCountries.find(
-    (c) =>
-      c.name
-        .toLowerCase()
-        .replace(/[^a-z0-9 -]/g, "")
-        .replace(/\s+/g, "-") === slug,
-  )
+  const sampleCountry = sampleCountries.find((c) => c.slug === slug)
   if (sampleCountry) {
     return {
       ...sampleCountry,
       _id: `sample_${slug}`,
-      slug: slug,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -80,9 +73,6 @@ export default async function CountryPage({ params }: CountryPageProps) {
 export async function generateStaticParams() {
   // Generate static params for sample countries using slugs
   return sampleCountries.map((country) => ({
-    slug: country.name
-      .toLowerCase()
-      .replace(/[^a-z0-9 -]/g, "")
-      .replace(/\s+/g, "-"),
+    slug: country.slug,
   }))
 }

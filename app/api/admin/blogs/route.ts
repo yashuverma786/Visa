@@ -1,23 +1,28 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/mongodb"
-import type { Blog } from "@/lib/types"
+import { checkAdminAuth } from "@/lib/auth"
 
-export async function GET() {
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9 -]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim()
+}
+
+export async function GET(request: NextRequest) {
   try {
+    if (!checkAdminAuth(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const { db } = await connectToDatabase()
+    const blogs = await db.collection("blogs").find({}).sort({ createdAt: -1 }).toArray()
 
-    const blogs = await db.collection<Blog>("blogs").find({}).sort({ createdAt: -1 }).toArray()
-
-    // Convert MongoDB _id to string and ensure proper structure
     const processedBlogs = blogs.map((blog) => ({
       ...blog,
-      _id: blog._id?.toString(),
-      slug:
-        blog.slug ||
-        blog.title
-          .toLowerCase()
-          .replace(/[^a-z0-9 -]/g, "")
-          .replace(/\s+/g, "-"),
+      _id: blog._id.toString(),
     }))
 
     return NextResponse.json(processedBlogs)
@@ -27,25 +32,22 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { db } = await connectToDatabase()
+    if (!checkAdminAuth(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const body = await request.json()
+    const { db } = await connectToDatabase()
 
     // Validate required fields
     if (!body.title || !body.content) {
-      return NextResponse.json({ error: "Missing required fields: title, content" }, { status: 400 })
+      return NextResponse.json({ error: "Title and content are required" }, { status: 400 })
     }
 
-    // Generate slug from title if not provided
-    const slug =
-      body.slug?.trim() ||
-      body.title
-        .toLowerCase()
-        .replace(/[^a-z0-9 -]/g, "")
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-")
-        .trim()
+    // Generate slug if not provided
+    const slug = body.slug || generateSlug(body.title)
 
     // Check if slug already exists
     const existingBlog = await db.collection("blogs").findOne({ slug: slug })
@@ -56,15 +58,12 @@ export async function POST(request: Request) {
     const blogData = {
       title: body.title.trim(),
       slug: slug,
+      excerpt: body.excerpt || "",
       content: body.content.trim(),
-      excerpt: body.excerpt?.trim() || body.content.substring(0, 150).trim() + "...",
-      featuredImage: body.featuredImage || "",
-      featuredImageAlt: body.featuredImageAlt || "",
-      metaTitle: body.metaTitle?.trim() || body.title.trim(),
-      metaDescription: body.metaDescription?.trim() || body.content.substring(0, 160).trim(),
-      tags: Array.isArray(body.tags) ? body.tags.filter((tag) => tag.trim()) : [],
-      published: body.published || false,
-      author: body.author?.trim() || "Admin",
+      image: body.image || "",
+      author: body.author || "JMT Travel Team",
+      tags: body.tags || [],
+      isPublished: body.isPublished || false,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
