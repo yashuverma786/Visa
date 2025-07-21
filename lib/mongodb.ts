@@ -1,25 +1,20 @@
-// This file should only be used on the server side
-if (typeof window !== "undefined") {
-  throw new Error("MongoDB client should only be used on the server side")
-}
-
-const { MongoClient } = require("mongodb")
-
-const uri = process.env.MONGODB_URI
-const options = {}
-
-let client: any
-let clientPromise: Promise<any>
+import { MongoClient } from "mongodb"
 
 if (!process.env.MONGODB_URI) {
-  throw new Error("Please add your Mongo URI to .env.local")
+  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"')
 }
+
+const uri = process.env.MONGODB_URI || "mongodb+srv://visaajmt:PCCuvYy4jAd16fpx@visaadatabase.jyvzcin.mongodb.net/"
+const options = {}
+
+let client
+let clientPromise: Promise<MongoClient>
 
 if (process.env.NODE_ENV === "development") {
   // In development mode, use a global variable so that the value
   // is preserved across module reloads caused by HMR (Hot Module Replacement).
   const globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<any>
+    _mongoClientPromise?: Promise<MongoClient>
   }
 
   if (!globalWithMongo._mongoClientPromise) {
@@ -31,6 +26,12 @@ if (process.env.NODE_ENV === "development") {
   // In production mode, it's best to not use a global variable.
   client = new MongoClient(uri, options)
   clientPromise = client.connect()
+}
+
+export async function connectToDatabase() {
+  const client = await clientPromise
+  const db = client.db("visaadatabase")
+  return { client, db }
 }
 
 // Export a module-scoped MongoClient promise. By doing this in a

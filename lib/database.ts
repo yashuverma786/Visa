@@ -8,13 +8,13 @@ if (typeof window !== "undefined") {
 
 const { MongoClient } = require("mongodb")
 
-const uri = process.env.MONGODB_URI
+const uri = process.env.MONGODB_URI || "mongodb+srv://visaajmt:PCCuvYy4jAd16fpx@visaadatabase.jyvzcin.mongodb.net/"
 const DB_NAME = "visaadatabase"
 
 let client: any
 let clientPromise: Promise<any>
 
-if (!process.env.MONGODB_URI) {
+if (!uri) {
   console.warn("MongoDB URI not found, using fallback data")
   clientPromise = Promise.reject(new Error("No MongoDB URI"))
 } else {
