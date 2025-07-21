@@ -243,7 +243,7 @@ export default function LeadsManager() {
         
         <div class="footer">
           <p>Visaa.in | D, 22, Block D, Noida Sector 3, Noida, Uttar Pradesh 201301</p>
-          <p>Phone: 9599076202 | Email: visa@journeymytrip.com</p>
+          <p>Phone: 95990 76202 | Email: visa@journeymytrip.com</p>
           <p>Generated on ${new Date().toLocaleString()}</p>
         </div>
         
@@ -273,36 +273,38 @@ export default function LeadsManager() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Mobile-Optimized Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-xl sm:text-2xl font-bold">Leads Management</h2>
-        <Button variant="outline" size="sm" onClick={fetchLeads} className="self-start sm:self-auto bg-transparent">
-          <RefreshCw className="h-4 w-4 mr-1" />
-          Refresh
-        </Button>
-      </div>
-
-      {/* Mobile-Optimized Search and Filter */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search leads..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <h2 className="text-xl sm:text-2xl font-bold">Leads Management</h2>
+          <Button variant="outline" size="sm" onClick={fetchLeads} className="self-start sm:self-auto">
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Refresh
+          </Button>
         </div>
-        <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-full sm:w-40">
-            <SelectValue placeholder="Filter by source" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Sources</SelectItem>
-            <SelectItem value="popup">Popup Form</SelectItem>
-            <SelectItem value="hero">Hero Section</SelectItem>
-            <SelectItem value="contact">Contact Page</SelectItem>
-          </SelectContent>
-        </Select>
+
+        {/* Mobile-Optimized Search and Filter */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search leads..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={sourceFilter} onValueChange={setSourceFilter}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Filter by source" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sources</SelectItem>
+              <SelectItem value="popup">Popup Form</SelectItem>
+              <SelectItem value="hero">Hero Section</SelectItem>
+              <SelectItem value="contact">Contact Page</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Mobile-Optimized Stats Cards */}
@@ -716,7 +718,7 @@ export default function LeadsManager() {
                         <div className="text-center py-8">
                           <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                           <p className="text-gray-500">No notes or follow-up actions recorded yet</p>
-                          <Button variant="outline" className="mt-4 bg-transparent">
+                          <Button variant="outline" className="mt-4">
                             Add Note
                           </Button>
                         </div>

@@ -1,97 +1,106 @@
 export interface Task {
-  _id: string
+  id: string
   title: string
   description: string
   status: "pending" | "in-progress" | "completed"
-  priority: "low" | "medium" | "high"
   createdAt: Date
   updatedAt: Date
 }
 
-export interface Country {
-  _id: string
-  name: string
-  code: string
-  slug: string
-  flagEmoji: string
-  visaFee: string
-  currency: string
-  processingTime: string
+export interface CreateTaskData {
+  title: string
   description: string
-  requirements: string
-  imageUrl: string
-  visaTypes: VisaType[]
-  generalDocuments?: string
-  generalProcess?: string
+  status: "pending" | "in-progress" | "completed"
 }
 
-export interface VisaType {
-  type: string
-  price: string
-  currency: string
+export interface UpdateTaskData extends CreateTaskData {
+  id: string
+}
+
+export interface VisaCategory {
+  id: string
+  name: string
+  type: string // e.g., "Tourist", "Business", "Student", "Work", "Family"
+  price: number
   processingTime: string
   validity: string
-  entryType: string
-  documents: string[]
-  process: string[]
+  entries: "Single" | "Multiple"
+  requiredDocuments: string[]
+  processSteps: string[]
+  additionalInfo?: string
   eligibility: string[]
+  restrictions?: string[]
+}
+
+export interface Country {
+  _id?: string
+  name: string
+  code: string
+  image: string
+  description: string
+  visaCategories: VisaCategory[]
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export interface VisaApplication {
-  _id: string
-  fullName: string
+  _id?: string
+  applicantName: string
   email: string
   phone: string
   country: string
-  visaType: string
-  travelDate: string
-  purpose: string
-  documents: string[]
+  visaCategory: string
+  documents: UploadedDocument[]
   status: "pending" | "processing" | "approved" | "rejected"
   submittedAt: Date
   notes?: string
+  dateOfBirth?: string
+  nationality?: string
+  passportNumber?: string
+  travelDate?: string
+  purpose?: string
+  additionalInfo?: string
+}
+
+export interface UploadedDocument {
+  name: string
+  url: string
+  type: string
+  size: number
 }
 
 export interface Testimonial {
-  _id: string
+  _id?: string
   name: string
   country: string
   rating: number
   comment: string
-  imageUrl?: string
-  isApproved: boolean
-  createdAt: Date
+  image?: string
+  createdAt?: Date
 }
 
-export interface Lead {
-  _id: string
+export interface LeadCapture {
+  _id?: string
   name: string
   email: string
   phone: string
-  country?: string
-  visaType?: string
+  placeToVisit: string
   message?: string
-  source: "popup" | "form" | "contact"
-  status: "new" | "contacted" | "converted" | "closed"
-  createdAt: Date
-  notes?: string
+  visaType?: string
+  country?: string
+  documents?: UploadedDocument[] // Add document support
+  source: "popup" | "hero" | "contact" | "form" | "visa-application"
+  createdAt?: Date
 }
 
-export interface Blog {
-  _id: string
-  title: string
-  slug: string
-  content: string
-  excerpt: string
-  featuredImage: string
-  featuredImageAlt: string
-  metaTitle: string
-  metaDescription: string
-  tags: string[]
-  author: string
-  published: boolean
-  publishedAt?: Date
-  createdAt: Date
-  updatedAt: Date
-  readTime?: number
+export interface PopupLead {
+  name: string
+  email: string
+  phone: string
+  placeToVisit: string
+}
+
+export interface AdminUser {
+  username: string
+  password: string
 }
