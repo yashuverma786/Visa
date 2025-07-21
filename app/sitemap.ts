@@ -46,9 +46,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  // Dynamic country routes
+  // Dynamic country routes using slug
   const countryRoutes = countries.map((country) => ({
-    url: `${baseUrl}/countries/${country.code.toLowerCase()}`,
+    url: `${baseUrl}/countries/${
+      country.slug ||
+      country.name
+        .toLowerCase()
+        .replace(/[^a-z0-9 -]/g, "")
+        .replace(/\s+/g, "-")
+    }`,
     lastModified: new Date(country.updatedAt || country.createdAt || new Date()),
     changeFrequency: "weekly" as const,
     priority: 0.8,

@@ -2,25 +2,22 @@ import { NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/mongodb"
 import type { Blog } from "@/lib/types"
 
-function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9 -]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim()
-}
-
 export async function GET() {
   try {
     const { db } = await connectToDatabase()
 
     const blogs = await db.collection<Blog>("blogs").find({}).sort({ createdAt: -1 }).toArray()
 
-    // Convert MongoDB _id to string
+    // Convert MongoDB _id to string and ensure proper structure
     const processedBlogs = blogs.map((blog) => ({
       ...blog,
       _id: blog._id?.toString(),
+      slug:
+        blog.slug ||
+        blog.title
+          .toLowerCase()
+          .replace(/[^a-z0-9 -]/g, "")
+          .replace(/\s+/g, "-"),
     }))
 
     return NextResponse.json(processedBlogs)
@@ -37,11 +34,18 @@ export async function POST(request: Request) {
 
     // Validate required fields
     if (!body.title || !body.content) {
-      return NextResponse.json({ error: "Missing required fields: title and content are required" }, { status: 400 })
+      return NextResponse.json({ error: "Missing required fields: title, content" }, { status: 400 })
     }
 
     // Generate slug from title if not provided
-    const slug = body.slug?.trim() || generateSlug(body.title)
+    const slug =
+      body.slug?.trim() ||
+      body.title
+        .toLowerCase()
+        .replace(/[^a-z0-9 -]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .trim()
 
     // Check if slug already exists
     const existingBlog = await db.collection("blogs").findOne({ slug: slug })
@@ -53,13 +57,13 @@ export async function POST(request: Request) {
       title: body.title.trim(),
       slug: slug,
       content: body.content.trim(),
-      excerpt: body.excerpt?.trim() || body.content.trim().substring(0, 150) + "...",
+      excerpt: body.excerpt?.trim() || body.content.substring(0, 150).trim() + "...",
       featuredImage: body.featuredImage || "",
-      featuredImageAlt: body.featuredImageAlt?.trim() || "",
+      featuredImageAlt: body.featuredImageAlt || "",
       metaTitle: body.metaTitle?.trim() || body.title.trim(),
-      metaDescription: body.metaDescription?.trim() || body.excerpt?.trim() || body.content.trim().substring(0, 160),
-      tags: Array.isArray(body.tags) ? body.tags.filter((tag: string) => tag.trim()) : [],
-      published: Boolean(body.published),
+      metaDescription: body.metaDescription?.trim() || body.content.substring(0, 160).trim(),
+      tags: Array.isArray(body.tags) ? body.tags.filter((tag) => tag.trim()) : [],
+      published: body.published || false,
       author: body.author?.trim() || "Admin",
       createdAt: new Date(),
       updatedAt: new Date(),
