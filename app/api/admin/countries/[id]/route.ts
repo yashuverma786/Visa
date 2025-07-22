@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
 import { ObjectId } from "mongodb"
 import { connectToDatabase } from "@/lib/mongodb"
-import type { Country } from "@/lib/types"
+import type { Country as CountryBase } from "@/lib/types"
+
+type Country = Omit<CountryBase, "_id"> & { _id: ObjectId | string }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

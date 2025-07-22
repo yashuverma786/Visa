@@ -13,10 +13,12 @@ export async function POST() {
     // Clear the session cookie
     response.cookies.set("admin-session", "", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 0,
+      secure: false,  // for testing
+      sameSite: "lax",
+      maxAge: 0,  // immediately expire
     })
+
+
 
     return response
   } catch (error) {

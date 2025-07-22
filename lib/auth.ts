@@ -22,13 +22,17 @@ export function clearAdminSession(): void {
 }
 
 export function isAdminAuthenticated(sessionToken?: string): boolean {
+  console.log("Session Token in Auth Check:", sessionToken)
+
   if (!sessionToken) return false
 
   try {
-    // Simple validation - in production use proper JWT validation
     const decoded = Buffer.from(sessionToken, "base64").toString()
+    console.log("Decoded Token:", decoded)
+
     return decoded.includes("admin-session")
-  } catch {
+  } catch (err) {
+    console.error("Decoding failed", err)
     return false
   }
 }

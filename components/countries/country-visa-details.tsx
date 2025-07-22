@@ -6,8 +6,99 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Clock, IndianRupee, FileText, CheckCircle, Users, Calendar, Globe, Phone, Mail } from "lucide-react"
-import type { Country, VisaCategory } from "@/lib/types"
+import {
+  Clock, IndianRupee, FileText, CheckCircle, Users, Calendar, Globe, Phone, Mail, DollarSign,
+  Euro,
+  PoundSterling,
+  CircleDollarSign
+} from "lucide-react"
+
+
+
+function getCurrencyIcon(currency: string) {
+  switch (currency) {
+    case "INR":
+      return <IndianRupee className="h-8 w-8 text-green-600 mx-auto mb-2" />
+    case "USD":
+      return <DollarSign className="h-8 w-8 text-green-600 mx-auto mb-2" />
+    case "CAD":
+      return (
+        <div className="text-green-600 text-2xl mx-auto mb-2">C$</div>
+      )
+    case "AUD":
+      return (
+        <div className="text-green-600 text-2xl mx-auto mb-2">A$</div>
+      )
+    case "SGD":
+      return (
+        <div className="text-green-600 text-2xl mx-auto mb-2">S$</div>
+      )
+    case "JPY":
+    case "CNY":
+      return (
+        <div className="text-green-600 text-2xl mx-auto mb-2">¥</div>
+      )
+    case "AED":
+      return (
+        <div className="text-green-600 text-2xl mx-auto mb-2">د.إ</div>
+      )
+    case "EUR":
+      return <Euro className="h-8 w-8 text-green-600 mx-auto mb-2" />
+    case "GBP":
+      return <PoundSterling className="h-8 w-8 text-green-600 mx-auto mb-2" />
+    default:
+      return <DollarSign className="h-8 w-8 text-green-600 mx-auto mb-2" />
+  }
+}
+
+
+
+
+// Update the import path below if your Country type is located elsewhere
+// Update the import path below to the correct location of your Country type
+// import type { Country } from "../../types/country"
+// Update the path below to the actual location of your Country type definition
+// Define VisaCategory and Country types locally since the module is missing
+type VisaCategory = {
+  id: string
+  name: string
+  type: string
+  price: number
+  currency?: string
+  processingTime: string
+  validity: string
+  entries: string
+  requiredDocuments: string[]
+  processSteps: string[]
+  eligibility: string[]
+  additionalInfo?: string
+}
+
+type Country = {
+  name: string
+  code: string
+  description?: string
+  image?: string
+  visaCategories: VisaCategory[]
+}
+
+function getCurrencyName(currency: string) {
+  const symbols: Record<string, string> = {
+    USD: "$",
+    EUR: "€",
+    GBP: "£",
+    CAD: "C$",
+    AUD: "A$",
+    INR: "₹",
+    JPY: "¥",
+    CNY: "¥",
+    SGD: "S$",
+    AED: "د.إ",
+  }
+
+  return symbols[currency] || "₹"
+}
+
 
 interface CountryVisaDetailsProps {
   country: Country
@@ -52,9 +143,8 @@ export default function CountryVisaDetails({ country }: CountryVisaDetailsProps)
             {country.visaCategories.map((category) => (
               <Card
                 key={category.id}
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  selectedCategory?.id === category.id ? "ring-2 ring-blue-500 bg-blue-50" : ""
-                }`}
+                className={`cursor-pointer transition-all hover:shadow-md ${selectedCategory?.id === category.id ? "ring-2 ring-blue-500 bg-blue-50" : ""
+                  }`}
                 onClick={() => setSelectedCategory(category)}
               >
                 <CardContent className="p-4">
@@ -65,7 +155,10 @@ export default function CountryVisaDetails({ country }: CountryVisaDetailsProps)
                     </Badge>
                   </div>
                   <div className="space-y-1 text-sm text-gray-600">
-                    <p>₹{category.price.toLocaleString("en-IN")}</p>
+                    <p>
+                      {(category.currency || "₹") + " " + category.price.toLocaleString("en-IN")} {" "}
+                      {getCurrencyName(category.currency || "INR")}
+                    </p>
                     <p>{category.processingTime}</p>
                     <p>{category.validity}</p>
                   </div>
@@ -102,13 +195,18 @@ export default function CountryVisaDetails({ country }: CountryVisaDetailsProps)
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <IndianRupee className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                    <div className="mb-2">
+                      {getCurrencyIcon(selectedCategory.currency || "INR")}
+                    </div>
                     <p className="text-sm text-gray-600">Visa Fee</p>
                     <p className="text-xl font-bold text-green-600">
-                      ₹{selectedCategory.price.toLocaleString("en-IN")}
+                      {selectedCategory.price.toLocaleString("en-IN")}{" "}
+                      {selectedCategory.currency || "INR"}
                     </p>
                   </CardContent>
                 </Card>
+
+
 
                 <Card>
                   <CardContent className="p-4 text-center">
@@ -214,7 +312,9 @@ export default function CountryVisaDetails({ country }: CountryVisaDetailsProps)
                   </div>
                   <div>
                     <p className="text-sm font-medium text-blue-800">Visa Fee</p>
-                    <p className="text-sm text-blue-600">₹{selectedCategory.price.toLocaleString("en-IN")}</p>
+                    <p className="text-sm text-blue-600">{selectedCategory.price.toLocaleString("en-IN")}{" "}
+                      {getCurrencyName(selectedCategory.currency || "INR")}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-blue-800">Validity</p>
