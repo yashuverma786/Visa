@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
-import type { Blog } from "@/lib/types"
+import type { Blog as BlogBase } from "@/lib/types"
+
+type Blog = BlogBase & { _id: string }
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -14,13 +16,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     const result = await db
       .collection<Blog>("blogs")
-      .updateOne({ _id: new ObjectId(params.id) }, { $set: { ...blogData, updatedAt: new Date() } })
+      .updateOne({ _id: params.id }, { $set: { ...blogData, updatedAt: new Date() } })
 
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 })
     }
 
-    const updatedBlog = await db.collection<Blog>("blogs").findOne({ _id: new ObjectId(params.id) })
+    const updatedBlog = await db.collection<Blog>("blogs").findOne({ _id: params.id })
 
     return NextResponse.json(updatedBlog)
   } catch (error) {
@@ -37,7 +39,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: "Invalid blog ID" }, { status: 400 })
     }
 
-    const result = await db.collection<Blog>("blogs").deleteOne({ _id: new ObjectId(params.id) })
+    const result = await db.collection<Blog>("blogs").deleteOne({ _id: params.id })
 
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 })

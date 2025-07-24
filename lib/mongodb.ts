@@ -32,6 +32,7 @@ export async function connectToDatabase() {
   const client = await clientPromise
   const db = client.db("visaadatabase")
   return { client, db }
+  
 }
 
 // Export a module-scoped MongoClient promise. By doing this in a

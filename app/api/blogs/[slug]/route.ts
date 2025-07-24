@@ -6,7 +6,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
     const { slug } = params
 
     const client = await connectToDatabase()
-    const db = client.db("jmt_travel")
+    const db = client.db("visaadatabase")
 
     // Only return published blogs for public API
     const blog = await db.collection("blogs").findOne({

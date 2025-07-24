@@ -3,11 +3,15 @@ import { connectToDatabase } from "@/lib/mongodb"
 
 export async function GET() {
   try {
-    const client = await connectToDatabase()
-    const db = client.db("jmt_travel")
+    const { db } = await connectToDatabase()
 
-    // Only return published blogs for public API
-    const blogs = await db.collection("blogs").find({ published: true }).sort({ publishedAt: -1 }).toArray()
+    // Fetch ONLY published blogs
+        const blogs = await db
+      .collection("blogs")
+      .find({}) // <-- sab blogs chahe published ho ya na ho
+      .sort({ publishedAt: -1 })
+      .toArray()
+
 
     return NextResponse.json(blogs)
   } catch (error) {

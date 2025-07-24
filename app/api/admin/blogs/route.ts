@@ -24,9 +24,12 @@ export async function POST(request: Request) {
     const body = await request.json()
 
     // Validate required fields
-    if (!body.title || !body.content || !body.author) {
-      return NextResponse.json({ error: "Missing required fields: title, content, author" }, { status: 400 })
+    if (!body.title || !body.content) {
+      return NextResponse.json({ error: "Missing required fields: title, content" }, { status: 400 })
     }
+
+    console.log("POST BODY:", body)
+
 
     // Generate slug from title if not provided
     const slug =
@@ -49,7 +52,6 @@ export async function POST(request: Request) {
       slug: slug,
       excerpt: body.excerpt?.trim() || "",
       content: body.content.trim(),
-      author: body.author.trim(),
       tags: body.tags || [],
       featured: body.featured || false,
       publishedAt: body.publishedAt ? new Date(body.publishedAt) : new Date(),
