@@ -8,21 +8,36 @@ type Blog = BlogBase & { _id: string }
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
     const { db } = await connectToDatabase()
-    const { _id, ...blogData }: Blog = await req.json()
+    const body = await req.json()
 
     if (!ObjectId.isValid(params.id)) {
       return NextResponse.json({ error: "Invalid blog ID" }, { status: 400 })
     }
 
-    const result = await db
-      .collection<Blog>("blogs")
-      .updateOne({ _id: params.id }, { $set: { ...blogData, updatedAt: new Date() } })
+    const existingBlog = await db.collection<Blog>("blogs").findOne({ _id: new ObjectId(params.id) })
 
-    if (result.matchedCount === 0) {
+    if (!existingBlog) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 })
     }
 
-    const updatedBlog = await db.collection<Blog>("blogs").findOne({ _id: params.id })
+    const updatedData = {
+      title: body.title,
+      content: body.content,
+      slug: body.slug,
+      excerpt: body.excerpt || "",
+      tags: body.tags || [],
+      featuredImage: body.featuredImage || existingBlog.featuredImage || null,
+      featured: body.featured ?? false,
+      published: body.published ?? false,
+      publishedAt: body.publishedAt ? new Date(body.publishedAt) : existingBlog.publishedAt || new Date(),
+      updatedAt: new Date(),
+    }
+
+    await db
+      .collection<Blog>("blogs")
+      .updateOne({ _id: new ObjectId(params.id) }, { $set: updatedData })
+
+    const updatedBlog = await db.collection<Blog>("blogs").findOne({ _id: new ObjectId(params.id) })
 
     return NextResponse.json(updatedBlog)
   } catch (error) {
@@ -39,7 +54,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: "Invalid blog ID" }, { status: 400 })
     }
 
-    const result = await db.collection<Blog>("blogs").deleteOne({ _id: params.id })
+    const result = await db.collection<Blog>("blogs").deleteOne({ _id: new ObjectId(params.id) })
 
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 })

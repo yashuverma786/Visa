@@ -1,18 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/mongodb"
 
-export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
+export async function GET(req: Request, { params }: { params: { slug: string } }) {
   try {
-    const { slug } = params
-
-    const client = await connectToDatabase()
-    const db = client.db("visaadatabase")
-
-    // Only return published blogs for public API
-    const blog = await db.collection("blogs").findOne({
-      slug: slug,
-      published: true,
-    })
+    const { db } = await connectToDatabase()
+    const blog = await db.collection("blogs").findOne({ slug: params.slug, published: true })
 
     if (!blog) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 })
