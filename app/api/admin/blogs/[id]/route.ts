@@ -3,7 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 import type { Blog as BlogBase } from "@/lib/types"
 
-type Blog = BlogBase & { _id: string }
+type Blog = BlogBase & { _id: ObjectId }
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
