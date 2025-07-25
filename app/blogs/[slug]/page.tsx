@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import BlogClientPage from "./BlogClientPage"
 
+
 interface BlogPageProps {
   params: {
     slug: string
@@ -42,6 +43,13 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
   }
 }
 
-export default function BlogPage({ params }: BlogPageProps) {
-  return <BlogClientPage params={params} />
+export default async function BlogPage({ params }: BlogPageProps) {
+  const blog = await getBlog(params.slug);
+
+  if (!blog) {
+    return <div>Blog not found.</div>;
+  }
+
+  return <BlogClientPage params={params} blog={blog} />;
 }
+

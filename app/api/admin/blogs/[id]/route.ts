@@ -3,7 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 import type { Blog as BlogBase } from "@/lib/types"
 
-type Blog = BlogBase & { _id: ObjectId }
+type Blog = BlogBase & { _id: string | ObjectId }
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -14,7 +14,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "Invalid blog ID" }, { status: 400 })
     }
 
-    const existingBlog = await db.collection<Blog>("blogs").findOne({ _id: new ObjectId(params.id) })
+    const objectId = new ObjectId(params.id)
+
+    const existingBlog = await db.collection("blogs").findOne({ _id: objectId })
 
     if (!existingBlog) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 })
@@ -33,11 +35,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       updatedAt: new Date(),
     }
 
-    await db
-      .collection<Blog>("blogs")
-      .updateOne({ _id: new ObjectId(params.id) }, { $set: updatedData })
+    await db.collection("blogs").updateOne({ _id: objectId }, { $set: updatedData })
 
-    const updatedBlog = await db.collection<Blog>("blogs").findOne({ _id: new ObjectId(params.id) })
+    const updatedBlog = await db.collection("blogs").findOne({ _id: objectId })
 
     return NextResponse.json(updatedBlog)
   } catch (error) {
@@ -54,7 +54,9 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: "Invalid blog ID" }, { status: 400 })
     }
 
-    const result = await db.collection<Blog>("blogs").deleteOne({ _id: new ObjectId(params.id) })
+    const objectId = new ObjectId(params.id)
+
+    const result = await db.collection("blogs").deleteOne({ _id: objectId })
 
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 })
@@ -66,3 +68,4 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     return NextResponse.json({ error: "Failed to delete blog" }, { status: 500 })
   }
 }
+ 
