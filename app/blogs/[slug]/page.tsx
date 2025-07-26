@@ -1,35 +1,41 @@
-import type { Metadata } from "next"
-import BlogClientPage from "./BlogClientPage"
+import type { Metadata } from "next";
+import BlogClientPage from "./BlogClientPage";
 
-
-interface BlogPageProps {
-  params: {
-    slug: string
-  }
+interface BlogPageParams {
+  slug: string;
 }
 
 async function getBlog(slug: string) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/blogs/${slug}`, {
-      cache: "no-store",
-    })
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_DOMAIN}/api/blogs/${slug}`,
+      {
+        cache: "no-store",
+      }
+    );
     if (response.ok) {
-      return await response.json()
+      return await response.json();
     }
-    return null
+    return null;
   } catch (error) {
-    console.error("Error fetching blog:", error)
-    return null
+    console.error("Error fetching blog:", error);
+    return null;
   }
 }
 
-export async function generateMetadata({ params }: BlogPageProps): Promise<Metadata> {
-  const blog = await getBlog(params.slug)
+// FIX #1: yaha params ko await karo
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<BlogPageParams>;
+}): Promise<Metadata> {
+  const { slug } = await params; // <-- await kiya
+  const blog = await getBlog(slug);
 
   if (!blog) {
     return {
       title: "Blog Not Found | Visaa.in",
-    }
+    };
   }
 
   return {
@@ -40,16 +46,22 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
       description: blog.metaDescription || blog.excerpt,
       images: blog.featuredImage ? [blog.featuredImage] : [],
     },
-  }
+  };
 }
 
-export default async function BlogPage({ params }: BlogPageProps) {
-  const blog = await getBlog(params.slug);
+// FIX #2: yaha bhi params ko await karo
+export default async function BlogPage({
+  params,
+}: {
+  params: Promise<BlogPageParams>;
+}) {
+  const { slug } = await params; // <-- await kiya
+  const blog = await getBlog(slug);
 
   if (!blog) {
     return <div>Blog not found.</div>;
   }
 
-  return <BlogClientPage params={params} blog={blog} />;
-}
+  return <BlogClientPage params={{ slug }} />;
 
+}

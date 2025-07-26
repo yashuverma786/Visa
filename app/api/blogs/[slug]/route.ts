@@ -15,7 +15,6 @@ export async function GET(req: NextRequest) {
 
     const blog = await db.collection("blogs").findOne({
       slug: slug,
-      published: true,
     });
 
     if (!blog) {
