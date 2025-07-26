@@ -3,14 +3,28 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowRight, MapPin, Clock } from "lucide-react"
-import { getCountries } from "@/lib/database"
+
+type VisaCategory = {
+  price: number
+  type: string
+  processingTime: string
+}
+
+type Country = {
+  _id: string
+  name: string
+  code: string
+  description?: string
+  image?: string
+  visaCategories?: VisaCategory[]
+}
 
 export default async function CountriesPreview() {
-  let countries = []
+  let countries: Country[] = []
 
   try {
-    countries = await getCountries()
-    // Show only first 6 countries for preview
+    const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/countries`, { cache: "no-store" })
+    countries = res.ok ? await res.json() : []
     countries = countries.slice(0, 6)
   } catch (error) {
     console.error("Error fetching countries for preview:", error)
