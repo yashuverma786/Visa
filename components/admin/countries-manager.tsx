@@ -783,13 +783,14 @@ function VisaCategoryForm({
                 <Label>Entries *</Label>
                 <Select
                   value={category.entries}
-                  onValueChange={(value: "Single" | "Multiple") => updateField("entries", value)}
+                  onValueChange={(value: "Single" | "double" | "Multiple") => updateField("entries", value)}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Single">Single Entry</SelectItem>
+                    <SelectItem value="double">double Entry</SelectItem>
                     <SelectItem value="Multiple">Multiple Entry</SelectItem>
                   </SelectContent>
                 </Select>
