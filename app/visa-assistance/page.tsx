@@ -286,9 +286,9 @@ export default function VisaAssistancePage() {
                             </a>
                           </p>
                           <p>
-                            <a href="mailto:travel@journeymytrip.com" className="hover:text-blue-800 transition-colors">
+                            {/* <a href="mailto:travel@journeymytrip.com" className="hover:text-blue-800 transition-colors">
                               travel@journeymytrip.com
-                            </a>
+                            </a> */}
                           </p>
                         </div>
                       </div>

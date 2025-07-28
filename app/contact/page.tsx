@@ -105,9 +105,9 @@ export default function ContactPage() {
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">Email Addresses</h3>
                         <div className="space-y-2">
                           <p className="text-gray-600">
-                            <a href="mailto:travel@journeymytrip.com" className="hover:text-blue-600 transition-colors">
+                            {/* <a href="mailto:travel@journeymytrip.com" className="hover:text-blue-600 transition-colors">
                               travel@journeymytrip.com
-                            </a>
+                            </a> */}
                           </p>
                           <p className="text-gray-600">
                             <a href="mailto:visa@journeymytrip.com" className="hover:text-blue-600 transition-colors">
