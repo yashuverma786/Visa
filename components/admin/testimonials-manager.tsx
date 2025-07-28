@@ -46,34 +46,34 @@ export default function TestimonialsManager() {
     }
   }
 
-const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const uploadData = new FormData();
-  uploadData.append("file", file);
+    const uploadData = new FormData();
+    uploadData.append("file", file);
 
-  try {
-    const response = await fetch("/api/upload", {
-      method: "POST",
-      body: uploadData,
-    });
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadData,
+      });
 
-    if (response.ok) {
-      const { url } = await response.json();
+      if (response.ok) {
+        const { url } = await response.json();
 
-      // yahan apne formData state ko update karo
-      setFormData((prev) => ({
-        ...prev,
-        image: url,
-      }));
-    } else {
-      console.error("Image upload failed");
+        // yahan apne formData state ko update karo
+        setFormData((prev) => ({
+          ...prev,
+          image: url,
+        }));
+      } else {
+        console.error("Image upload failed");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
     }
-  } catch (error) {
-    console.error("Upload error:", error);
-  }
-};
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -221,12 +221,15 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 <Textarea
                   id="comment"
                   value={formData.comment}
-                  onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, comment: e.target.value })
+                  }
                   rows={4}
                   placeholder="Enter the customer's testimonial..."
                   required
                 />
               </div>
+
 
               <div>
                 <Label htmlFor="image">Customer Photo (Optional)</Label>
