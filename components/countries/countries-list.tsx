@@ -1,8 +1,12 @@
 import { getCountries } from "@/lib/database"
 import CountryCard from "./country-card"
+import type { Country } from "@/lib/types" 
 
 export default async function CountriesList() {
-  let countries = []
+  
+  let countries: Country[] = []
+
+  
 
   try {
     console.log("🔍 Fetching countries for frontend...")

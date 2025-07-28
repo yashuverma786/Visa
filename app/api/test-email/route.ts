@@ -64,7 +64,7 @@ export async function GET() {
         <p><strong>JMT Travel</strong><br>
         D-22 Ground and First Floor Sector 3 Noida 201301 Uttar Pradesh<br>
         Phone: 9312540202, 9599076202, 9717540883<br>
-        Email: travel@journeymytrip.com, visa@journeymytrip.com</p>
+        Email: travel@journeymytrip.com, info@visaa.in</p>
       `,
     })
 

@@ -63,7 +63,7 @@ export default function CTASection() {
               href="mailto:visa@journeymytrip.com"
               className="font-semibold hover:text-blue-200 transition-colors inline-flex items-center"
             >
-              visa@journeymytrip.com
+              info@visaa.in
               <ChevronRight className="ml-1 h-4 w-4" />
             </a>
           </div>

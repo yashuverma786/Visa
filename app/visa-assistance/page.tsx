@@ -39,7 +39,7 @@ export default function VisaAssistancePage() {
               >
                 <a href="mailto:visa@journeymytrip.com" className="flex items-center">
                   <Mail className="h-5 w-5 mr-2" />
-                  Email: visa@journeymytrip.com
+                  Email: info@visaa.in
                 </a>
               </Button>
             </div>
@@ -282,7 +282,7 @@ export default function VisaAssistancePage() {
                         <div className="mt-2 space-y-1">
                           <p>
                             <a href="mailto:visa@journeymytrip.com" className="hover:text-blue-800 transition-colors">
-                              visa@journeymytrip.com
+                              info@visaa.in
                             </a>
                           </p>
                           <p>

@@ -243,7 +243,7 @@ export default function LeadsManager() {
         
         <div class="footer">
           <p>Visaa.in | D, 22, Block D, Noida Sector 3, Noida, Uttar Pradesh 201301</p>
-          <p>Phone: 9599076202 | Email: visa@journeymytrip.com</p>
+          <p>Phone: 9599076202 | Email: info@visaa.in</p>
           <p>Generated on ${new Date().toLocaleString()}</p>
         </div>
         

@@ -111,7 +111,7 @@ export default function ContactPage() {
                           </p>
                           <p className="text-gray-600">
                             <a href="mailto:visa@journeymytrip.com" className="hover:text-blue-600 transition-colors">
-                              visa@journeymytrip.com
+                              info@visaa.in
                             </a>
                           </p>
                         </div>

@@ -23,13 +23,16 @@ export async function POST(request: Request) {
     const { db } = await connectToDatabase()
     const body = await request.json()
 
-    if (!body.name || !body.content || !body.rating) {
+    // Fix: use comment if content is not provided
+    const comment = body.content || body.comment
+
+    if (!body.name || !comment || !body.rating) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
     const testimonialData = {
       name: body.name.trim(),
-      content: body.content.trim(),
+      content: comment.trim(),
       rating: Number(body.rating),
       country: body.country?.trim() || "",
       image: body.image || "",

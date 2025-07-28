@@ -133,7 +133,7 @@ Please follow up with this customer promptly.
 JMT Travel
 D-22 Ground and First Floor Sector 3 Noida 201301 Uttar Pradesh
 Phone: 9312540202, 9599076202, 9717540883
-Email: travel@journeymytrip.com, visa@journeymytrip.com
+Email: travel@journeymytrip.com, info@visaa.in
 `
 
   try {

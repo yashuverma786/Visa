@@ -68,7 +68,7 @@ export default function CountryCard({ country }: CountryCardProps) {
 
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-gray-500">Starting from</span>
-          <span className="text-lg font-bold text-green-600">₹{startingPrice.toLocaleString("en-IN")}</span>
+          <span className="text-lg font-bold text-green-600">{(cheapestCategory?.currency || "₹")} {startingPrice.toLocaleString("en-IN")}</span>
         </div>
 
         <Button asChild className="w-full">

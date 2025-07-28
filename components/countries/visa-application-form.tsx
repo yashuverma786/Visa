@@ -205,6 +205,7 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
                     const category = country.visaCategories.find((cat) => cat.id === value)
                     setSelectedCategory(category || null)
                   }}
+
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a visa category" />
@@ -212,10 +213,12 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
                   <SelectContent>
                     {country.visaCategories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
-                        {category.name} - ₹{category.price.toLocaleString()}
+                        {category.type.toUpperCase()} - {category.currency || "₹"} {category.price}
                       </SelectItem>
                     ))}
                   </SelectContent>
+
+
                 </Select>
               </div>
 
@@ -233,7 +236,10 @@ export default function VisaApplicationForm({ country }: VisaApplicationFormProp
                     </div>
                     <div>
                       <p className="text-sm font-medium text-blue-900">Visa Fee</p>
-                      <p className="text-lg font-bold text-green-600">₹{selectedCategory.price.toLocaleString()}</p>
+                      <p className="text-lg font-bold text-green-600">
+                        {selectedCategory.currency || "₹"} {selectedCategory.price.toLocaleString()}
+                      </p>
+
                     </div>
                   </div>
                 </div>

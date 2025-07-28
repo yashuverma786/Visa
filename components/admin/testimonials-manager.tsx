@@ -46,27 +46,34 @@ export default function TestimonialsManager() {
     }
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    try {
-      const response = await fetch(`/api/upload?filename=${file.name}`, {
-        method: "POST",
-        body: file,
-      })
+  const uploadData = new FormData();
+  uploadData.append("file", file);
 
-      if (response.ok) {
-        const { url } = await response.json()
-        setFormData({ ...formData, image: url })
-      } else {
-        alert("Failed to upload image")
-      }
-    } catch (error) {
-      console.error("Upload error:", error)
-      alert("Error uploading image")
+  try {
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: uploadData,
+    });
+
+    if (response.ok) {
+      const { url } = await response.json();
+
+      // yahan apne formData state ko update karo
+      setFormData((prev) => ({
+        ...prev,
+        image: url,
+      }));
+    } else {
+      console.error("Image upload failed");
     }
+  } catch (error) {
+    console.error("Upload error:", error);
   }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

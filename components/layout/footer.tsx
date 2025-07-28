@@ -20,7 +20,7 @@ export default function Footer() {
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-blue-400" />
                 <a href="mailto:visa@journeymytrip.com" className="text-gray-300 hover:text-white transition-colors">
-                  visa@journeymytrip.com
+                  info@visaa.in
                 </a>
               </div>
               <div className="flex items-center space-x-2">

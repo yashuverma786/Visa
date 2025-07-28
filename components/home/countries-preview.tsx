@@ -98,7 +98,9 @@ export default async function CountriesPreview() {
                     <div className="flex justify-between items-center mb-4">
                       <div className="animate-fade-in">
                         <p className="text-sm text-gray-500">Starting from</p>
-                        <p className="text-lg font-bold text-green-600">₹{startingPrice.toLocaleString("en-IN")}</p>
+                        <p className="text-lg font-bold text-green-600">
+                          {cheapestCategory?.currency || "₹"} {startingPrice.toLocaleString("en-IN")}
+                        </p>
                       </div>
                       <div className="text-right animate-fade-in-delay">
                         <p className="text-sm text-gray-500 flex items-center">
@@ -135,7 +137,9 @@ export default async function CountriesPreview() {
                       asChild
                       className="w-full group-hover:bg-blue-700 transition-all duration-300 transform group-hover:scale-105"
                     >
-                      <Link href={`/countries/${country.code.toLowerCase()}`}>
+                      <Link href={`/countries/${country.slug?.toLowerCase() || country.name.toLowerCase()}`}>
+
+
                         View Details
                         <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                       </Link>

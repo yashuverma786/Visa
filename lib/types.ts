@@ -40,6 +40,7 @@ export interface Country {
   visaCategories: VisaCategory[]
   createdAt?: Date
   updatedAt?: Date
+  
 }
 
 export interface VisaType {
@@ -75,7 +76,7 @@ export interface Testimonial {
   country: string
   rating: number
   comment: string
-  imageUrl?: string
+  image?: string 
   isApproved: boolean
   createdAt: Date
 }
@@ -112,3 +113,5 @@ export interface Blog {
   updatedAt: Date
   readTime?: number
 }
+
+

@@ -16,7 +16,7 @@ const visaTypes = [
       "Multiple entry options available",
     ],
     countries: ["USA", "UK", "Canada", "Australia", "Schengen"],
-    startingPrice: "₹8,000",
+      
   },
   {
     icon: <Briefcase className="h-8 w-8 text-green-600" />,
@@ -24,7 +24,7 @@ const visaTypes = [
     description: "For business meetings, conferences, and professional activities.",
     features: ["Business meetings", "Conferences and seminars", "Trade negotiations", "Professional networking"],
     countries: ["USA", "UK", "Canada", "Singapore", "UAE"],
-    startingPrice: "₹12,000",
+      
   },
   {
     icon: <GraduationCap className="h-8 w-8 text-purple-600" />,
@@ -32,7 +32,7 @@ const visaTypes = [
     description: "For pursuing education and academic programs abroad.",
     features: ["University admissions", "Language courses", "Research programs", "Exchange programs"],
     countries: ["USA", "UK", "Canada", "Australia", "Germany"],
-    startingPrice: "₹15,000",
+     
   },
   {
     icon: <Users className="h-8 w-8 text-orange-600" />,
@@ -45,7 +45,7 @@ const visaTypes = [
       "Long-term career opportunities",
     ],
     countries: ["Canada", "Australia", "Germany", "New Zealand", "UAE"],
-    startingPrice: "₹20,000",
+      
   },
   {
     icon: <Heart className="h-8 w-8 text-red-600" />,
@@ -53,7 +53,7 @@ const visaTypes = [
     description: "For family reunification and joining relatives abroad.",
     features: ["Spouse visas", "Dependent visas", "Parent visas", "Family reunification"],
     countries: ["USA", "UK", "Canada", "Australia", "New Zealand"],
-    startingPrice: "₹18,000",
+      
   },
   {
     icon: <Stethoscope className="h-8 w-8 text-teal-600" />,
@@ -61,7 +61,7 @@ const visaTypes = [
     description: "For medical treatment and healthcare services abroad.",
     features: ["Medical treatment", "Specialized healthcare", "Medical consultations", "Accompanying patient visas"],
     countries: ["USA", "UK", "Germany", "Singapore", "Thailand"],
-    startingPrice: "₹10,000",
+      
   },
 ]
 
@@ -124,8 +124,8 @@ export default function VisaTypesPage() {
                     {/* Pricing */}
                     <div className="border-t pt-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Starting from</span>
-                        <span className="text-lg font-bold text-green-600">{visa.startingPrice}</span>
+                        <span className="text-sm text-gray-500"> </span>
+                        {/* <span className="text-lg font-bold text-green-600">{visa.startingPrice}</span> */}
                       </div>
                     </div>
 

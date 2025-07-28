@@ -340,7 +340,7 @@ export default function CountryVisaDetails({ country }: CountryVisaDetailsProps)
                       <Mail className="h-4 w-4 mr-2 text-green-700" />
                       <strong>Email:</strong>{" "}
                       <a href="mailto:visa@journeymytrip.com" className="ml-1 text-green-700 hover:underline">
-                        visa@journeymytrip.com
+                        info@visaa.in
                       </a>
                     </p>
                     <p className="flex items-center">
