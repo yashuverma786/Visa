@@ -1,9 +1,4 @@
 {
-  "buildCommand": "npm install --legacy-peer-deps && npm run build",
-  "outputDirectory": ".next",
-  "installCommand": "npm install --legacy-peer-deps"
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "buildCommand": "pnpm build"
 }
-
-
-
-
