@@ -85,6 +85,7 @@ export default async function BlogsPage() {
               >
                 <h3 className="text-lg font-semibold line-clamp-2">
                   {blog.title}
+
                 </h3>
                 <div className="flex items-center text-gray-600 text-sm mt-2">
                   <Calendar className="w-4 h-4 mr-1" />
