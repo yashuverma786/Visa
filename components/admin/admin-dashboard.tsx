@@ -68,8 +68,9 @@ export default function AdminDashboard() {
       // Calculate pending applications
       const pendingApplications = applications.filter((app: any) => app.status === "pending").length
 
-      // Calculate published blogs
-      const publishedBlogs = blogs.filter((blog: any) => blog.published).length
+      // Show all blogs as published (until we add published flag properly)
+const publishedBlogs = blogs.length
+
 
       setStats({
         totalApplications: applications.length,

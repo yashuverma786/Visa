@@ -1,35 +1,38 @@
-import { NextResponse } from "next/server"
-import { connectToDatabase } from "@/lib/mongodb"
+import { NextResponse } from "next/server";
+import { connectToDatabase } from "@/lib/mongodb";
 
+// ======================= GET =======================
 export async function GET() {
   try {
-    const { db } = await connectToDatabase()
-    const blogs = await db.collection("blogs").find({}).sort({ createdAt: -1 }).toArray()
-
+    const { db } = await connectToDatabase();
+    const blogs = await db.collection("blogs").find({}).sort({ createdAt: -1 }).toArray();
+    // Convert _id to string for frontend compatibility
     const processedBlogs = blogs.map((blog) => ({
       ...blog,
       _id: blog._id.toString(),
-    }))
-
-    return NextResponse.json(processedBlogs)
+    }));
+    return NextResponse.json(processedBlogs);
   } catch (error) {
-    console.error("Error fetching blogs:", error)
-    return NextResponse.json({ error: "Failed to fetch blogs" }, { status: 500 })
+    console.error("Error fetching blogs:", error);
+    return NextResponse.json({ error: "Failed to fetch blogs" }, { status: 500 });
   }
 }
 
+// ======================= POST =======================
 export async function POST(request: Request) {
   try {
-    const { db } = await connectToDatabase()
-    const body = await request.json()
+    const { db } = await connectToDatabase();
+    const body = await request.json();
 
     // Validate required fields
     if (!body.title || !body.content) {
-      return NextResponse.json({ error: "Missing required fields: title, content" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Missing required fields: title, content" },
+        { status: 400 }
+      );
     }
 
-    console.log("POST BODY:", body)
-
+    console.log("POST BODY:", body);
 
     // Generate slug from title if not provided
     const slug =
@@ -39,34 +42,43 @@ export async function POST(request: Request) {
         .replace(/[^a-z0-9 -]/g, "")
         .replace(/\s+/g, "-")
         .replace(/-+/g, "-")
-        .trim()
+        .trim();
 
     // Check if slug already exists
-    const existingBlog = await db.collection("blogs").findOne({ slug: slug })
+    const existingBlog = await db.collection("blogs").findOne({ slug });
     if (existingBlog) {
-      return NextResponse.json({ error: "A blog with this slug already exists" }, { status: 400 })
+      return NextResponse.json(
+        { error: "A blog with this slug already exists" },
+        { status: 400 }
+      );
     }
 
+    const now = new Date();
     const blogData = {
       title: body.title.trim(),
-      slug: slug,
+      slug,
       excerpt: body.excerpt?.trim() || "",
       content: body.content.trim(),
       tags: body.tags || [],
       featured: body.featured || false,
-      publishedAt: body.publishedAt ? new Date(body.publishedAt) : new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
+      published: body.published ?? true,   // ✅ ye add kar
+      metaTitle: body.metaTitle?.trim() || "",
+      metaDescription: body.metaDescription?.trim() || "",
+      country: body.country?.trim() || "",
+      featuredImage: body.featuredImage || "",
+      publishedAt: body.publishedAt ? new Date(body.publishedAt) : now,
+      createdAt: now,
+      updatedAt: now,
+    };
 
-    const result = await db.collection("blogs").insertOne(blogData)
+    const result = await db.collection("blogs").insertOne(blogData);
 
     return NextResponse.json({
       _id: result.insertedId.toString(),
       ...blogData,
-    })
+    });
   } catch (error) {
-    console.error("Error creating blog:", error)
-    return NextResponse.json({ error: "Failed to create blog" }, { status: 500 })
+    console.error("Error creating blog:", error);
+    return NextResponse.json({ error: "Failed to create blog" }, { status: 500 });
   }
 }

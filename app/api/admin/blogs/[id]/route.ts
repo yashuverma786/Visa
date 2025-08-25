@@ -22,18 +22,21 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "Blog not found" }, { status: 404 })
     }
 
-    const updatedData = {
-      title: body.title,
-      content: body.content,
-      slug: body.slug,
-      excerpt: body.excerpt || "",
-      tags: body.tags || [],
-      featuredImage: body.featuredImage || existingBlog.featuredImage || null,
-      featured: body.featured ?? false,
-      published: body.published ?? false,
-      publishedAt: body.publishedAt ? new Date(body.publishedAt) : existingBlog.publishedAt || new Date(),
-      updatedAt: new Date(),
-    }
+   const updatedData = {
+  title: body.title,
+  content: body.content,
+  slug: body.slug,
+  excerpt: body.excerpt || "",
+  tags: body.tags || [],
+  featuredImage: body.featuredImage || existingBlog.featuredImage || null,
+  featuredImageAlt: body.featuredImageAlt || existingBlog.featuredImageAlt || "",
+  metaTitle: body.metaTitle || existingBlog.metaTitle || "",
+  metaDescription: body.metaDescription || existingBlog.metaDescription || "",
+  featured: body.featured ?? false,
+  published: body.published ?? false,
+  publishedAt: body.publishedAt ? new Date(body.publishedAt) : existingBlog.publishedAt || new Date(),
+  updatedAt: new Date(),
+}
 
     await db.collection("blogs").updateOne({ _id: objectId }, { $set: updatedData })
 
