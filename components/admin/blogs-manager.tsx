@@ -114,26 +114,17 @@ export default function BlogsManager() {
     formData.append("metaDescription", metaDescription);
     const res = await fetch("/api/admin/blogs", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title,
-        slug,
-        excerpt,
-        country: selectedCountry,
-        content,
-        metaTitle,
-        metaDescription,
-      }),
+      body: formData,
     });
 
     if (res.ok) {
-    const savedBlog = await res.json();
-    await fetchBlogs(); // Refetch all blogs from the server
-    toast({
-      title: "Success",
-      description: `Blog created successfully`,
-    });
-    setIsOpen(false);
+      const savedBlog = await res.json();
+      await fetchBlogs(); // Refetch all blogs from the server
+      toast({
+        title: "Success",
+        description: `Blog created successfully`,
+      });
+      setIsOpen(false);
     } else {
       alert("Error saving blog ❌");
     }
@@ -274,10 +265,26 @@ export default function BlogsManager() {
       <div className="mt-8">
         <h2 className="text-2xl font-semibold mb-4">📚 All Blogs</h2>
         {blogs.map(blog => (
-          <div key={blog._id}>
-            <h3>{blog.title}</h3>
-            <p>{blog.excerpt}</p>
-            {/* Add other fields as needed */}
+          <div key={blog._id} className="flex items-center gap-4 border-b py-3">
+            {blog.featuredImageUrl && (
+              <img src={blog.featuredImageUrl} alt={blog.title} className="w-16 h-16 object-cover rounded" />
+            )}
+            <div className="flex-1">
+              <h3 className="font-bold">{blog.title}</h3>
+              <p className="text-sm text-gray-600">{blog.excerpt}</p>
+            </div>
+            <button className="px-2 py-1 bg-yellow-500 text-white rounded mr-2" onClick={() => {/* TODO: Edit logic */}}>Edit</button>
+            <button className="px-2 py-1 bg-red-600 text-white rounded" onClick={async () => {
+              if (confirm('Delete this blog?')) {
+                const res = await fetch(`/api/admin/blogs/${blog._id}`, { method: 'DELETE' });
+                if (res.ok) {
+                  toast({ title: 'Deleted', description: 'Blog deleted.' });
+                  await fetchBlogs();
+                } else {
+                  alert('Error deleting blog');
+                }
+              }
+            }}>Delete</button>
           </div>
         ))}
       </div>

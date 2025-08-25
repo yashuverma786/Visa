@@ -69,7 +69,7 @@ export default async function BlogsPage() {
               {/* IMAGE */}
               <div className="relative h-56 overflow-hidden">
                 <img
-                  src={blog.featuredImage || "/placeholder.svg"}
+                  src={blog.featuredImageUrl || "/placeholder.svg"}
                   alt={blog.title}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
@@ -127,7 +127,7 @@ export default async function BlogsPage() {
           <div className="rounded-xl shadow p-4 bg-[#eff6ff] text-[#1e57c6]">
             <h3 className="font-semibold mb-3">Latest Blogs</h3>
             <ul className="space-y-2">
-              {latestBlogs.map((lb) => (
+              {blogs.slice(0, 3).map((lb: any) => (
                 <li key={lb.slug}>
                   <Link href={`/blogs/${lb.slug}`} className="hover:underline">
                     {lb.title}
