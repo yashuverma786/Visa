@@ -2,9 +2,8 @@ import { Suspense } from "react"
 import CountriesList from "@/components/countries/countries-list"
 import CountriesSearch from "@/components/countries/countries-search"
 
-// Force dynamic rendering to ensure fresh data
-export const dynamic = "force-dynamic"
-export const revalidate = 0
+// Enable static generation with incremental static regeneration
+export const revalidate = 60
 
 export default function CountriesPage() {
   return (

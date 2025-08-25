@@ -12,8 +12,8 @@ async function getCountryBySlug(slug: string) {
   try {
     // Try to fetch from database via API using slug
     const baseUrl = process.env.NEXT_PUBLIC_DOMAIN || "http://localhost:3000"
-    const response = await fetch(`${baseUrl}/api/countries/slug/${slug}`, {
-      cache: "no-store",
+      const response = await fetch(`${baseUrl}/api/countries/slug/${slug}`, {
+        cache: "force-cache",
     })
 
     if (response.ok) {

@@ -11,7 +11,7 @@ const latestBlogs = [
 async function getBlogs() {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/blogs`, {
-      cache: "no-store",
+      cache: "force-cache",
     })
     if (response.ok) return await response.json()
     return []
