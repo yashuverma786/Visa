@@ -2,6 +2,9 @@ import Link from "next/link"
 import HeroCountrySlider from "./HeroCountrySlider"
 import { Calendar } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+
+
 const latestBlogs = [
   { slug: "sample-latest-1", title: "How to Prepare Visa Documents" },
   { slug: "sample-latest-2", title: "Top 5 Tourist Visa Tips" },
@@ -11,7 +14,8 @@ const latestBlogs = [
 async function getBlogs() {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/blogs`, {
-      cache: "force-cache",
+      cache: "no-store",
+      next: { revalidate: 0 },
     })
     if (response.ok) return await response.json()
     return []
@@ -20,6 +24,7 @@ async function getBlogs() {
     return []
   }
 }
+
 
 export default async function BlogsPage() {
   const blogs = await getBlogs()
