@@ -22,7 +22,27 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { db } = await connectToDatabase();
-    const body = await request.json();
+    let body;
+    let featuredImageUrl = "";
+
+    // Check content type for FormData
+    const contentType = request.headers.get("content-type") || "";
+    if (contentType.includes("multipart/form-data")) {
+      // Parse FormData
+      const formData = await request.formData();
+      body = {};
+      for (const [key, value] of formData.entries()) {
+        if (key === "featuredImage" && value instanceof File && value.size > 0) {
+          // Save image to /public/uploads or use a cloud service
+          // For demo, just use a placeholder URL
+          featuredImageUrl = `/placeholder-user.jpg`;
+        } else {
+          body[key] = value;
+        }
+      }
+    } else {
+      body = await request.json();
+    }
 
     // Validate required fields
     if (!body.title || !body.content) {
@@ -31,8 +51,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
-    console.log("POST BODY:", body);
 
     // Generate slug from title if not provided
     const slug =
@@ -61,11 +79,11 @@ export async function POST(request: Request) {
       content: body.content.trim(),
       tags: body.tags || [],
       featured: body.featured || false,
-      published: body.published ?? true,   // ✅ ye add kar
+      published: body.published ?? true,
       metaTitle: body.metaTitle?.trim() || "",
       metaDescription: body.metaDescription?.trim() || "",
       country: body.country?.trim() || "",
-      featuredImage: body.featuredImage || "",
+      featuredImageUrl,
       publishedAt: body.publishedAt ? new Date(body.publishedAt) : now,
       createdAt: now,
       updatedAt: now,
