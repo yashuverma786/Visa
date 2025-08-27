@@ -1,74 +1,83 @@
-import { NextResponse } from "next/server"
-import { connectToDatabase } from "@/lib/mongodb"
-import { ObjectId } from "mongodb"
-import type { Blog as BlogBase } from "@/lib/types"
+import { NextResponse } from "next/server";
+import { connectToDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
+import fs from "fs";
+import path from "path";
 
-type Blog = BlogBase & { _id: string | ObjectId }
-
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const { db } = await connectToDatabase()
-    const body = await req.json()
+    const { id } = await context.params; // ✅ await params
+    const { db } = await connectToDatabase();
 
-    if (!ObjectId.isValid(params.id)) {
-      return NextResponse.json({ error: "Invalid blog ID" }, { status: 400 })
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid blog ID" }, { status: 400 });
     }
 
-    const objectId = new ObjectId(params.id)
+    const objectId = new ObjectId(id);
 
-    const existingBlog = await db.collection("blogs").findOne({ _id: objectId })
+    const contentType = req.headers.get("content-type") || "";
+    let body: any = {};
+    let featuredImageUrl = "";
 
-    if (!existingBlog) {
-      return NextResponse.json({ error: "Blog not found" }, { status: 404 })
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+
+      for (const [key, value] of formData.entries()) {
+        if (key === "featuredImage" && value instanceof File && value.size > 0) {
+          const bytes = await value.arrayBuffer();
+          const buffer = Buffer.from(bytes);
+
+          const uploadsDir = path.join(process.cwd(), "public", "uploads");
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+          }
+
+          const filename = `${Date.now()}-${value.name}`;
+          const filePath = path.join(uploadsDir, filename);
+          await fs.promises.writeFile(filePath, buffer);
+
+          featuredImageUrl = `/uploads/${filename}`;
+        } else {
+          body[key] = value;
+        }
+      }
+    } else {
+      body = await req.json();
     }
 
-   const updatedData = {
-  title: body.title,
-  content: body.content,
-  slug: body.slug,
-  excerpt: body.excerpt || "",
-  tags: body.tags || [],
-  featuredImage: body.featuredImage || existingBlog.featuredImage || null,
-  featuredImageAlt: body.featuredImageAlt || existingBlog.featuredImageAlt || "",
-  metaTitle: body.metaTitle || existingBlog.metaTitle || "",
-  metaDescription: body.metaDescription || existingBlog.metaDescription || "",
-  featured: body.featured ?? false,
-  published: body.published ?? false,
-  publishedAt: body.publishedAt ? new Date(body.publishedAt) : existingBlog.publishedAt || new Date(),
-  updatedAt: new Date(),
-}
+    const now = new Date();
+    const updateData: any = {
+      title: body.title?.trim(),
+      slug: body.slug,
+      excerpt: body.excerpt?.trim() || "",
+      content: body.content?.trim(),
+      country: body.country?.trim() || "",
+      metaTitle: body.metaTitle?.trim() || "",
+      metaDescription: body.metaDescription?.trim() || "",
+      updatedAt: now,
+    };
 
-    await db.collection("blogs").updateOne({ _id: objectId }, { $set: updatedData })
+    if (featuredImageUrl) {
+      updateData.featuredImageUrl = featuredImageUrl;
+    }
 
-    const updatedBlog = await db.collection("blogs").findOne({ _id: objectId })
+    await db.collection("blogs").updateOne(
+      { _id: objectId },
+      { $set: updateData }
+    );
 
-    return NextResponse.json(updatedBlog)
+    return NextResponse.json({
+      message: "Blog updated successfully",
+      ...updateData,
+    });
   } catch (error) {
-    console.error("Error updating blog:", error)
-    return NextResponse.json({ error: "Failed to update blog" }, { status: 500 })
+    console.error("Error updating blog:", error);
+    return NextResponse.json(
+      { error: "Failed to update blog" },
+      { status: 500 }
+    );
   }
 }
-
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  try {
-    const { db } = await connectToDatabase()
-
-    if (!ObjectId.isValid(params.id)) {
-      return NextResponse.json({ error: "Invalid blog ID" }, { status: 400 })
-    }
-
-    const objectId = new ObjectId(params.id)
-
-    const result = await db.collection("blogs").deleteOne({ _id: objectId })
-
-    if (result.deletedCount === 0) {
-      return NextResponse.json({ error: "Blog not found" }, { status: 404 })
-    }
-
-    return NextResponse.json({ message: "Blog deleted successfully" })
-  } catch (error) {
-    console.error("Error deleting blog:", error)
-    return NextResponse.json({ error: "Failed to delete blog" }, { status: 500 })
-  }
-}
- 

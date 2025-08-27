@@ -1,20 +1,31 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
+import fs from "fs";
+import path from "path";
 
 // ======================= GET =======================
 export async function GET() {
   try {
     const { db } = await connectToDatabase();
-    const blogs = await db.collection("blogs").find({}).sort({ createdAt: -1 }).toArray();
+    const blogs = await db
+      .collection("blogs")
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+
     // Convert _id to string for frontend compatibility
     const processedBlogs = blogs.map((blog) => ({
       ...blog,
       _id: blog._id.toString(),
     }));
+
     return NextResponse.json(processedBlogs);
   } catch (error) {
     console.error("Error fetching blogs:", error);
-    return NextResponse.json({ error: "Failed to fetch blogs" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch blogs" },
+      { status: 500 }
+    );
   }
 }
 
@@ -22,20 +33,32 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { db } = await connectToDatabase();
-    let body;
+    let body: any = {};
     let featuredImageUrl = "";
 
-    // Check content type for FormData
     const contentType = request.headers.get("content-type") || "";
+
     if (contentType.includes("multipart/form-data")) {
       // Parse FormData
       const formData = await request.formData();
-      body = {};
+
       for (const [key, value] of formData.entries()) {
         if (key === "featuredImage" && value instanceof File && value.size > 0) {
-          // Save image to /public/uploads or use a cloud service
-          // For demo, just use a placeholder URL
-          featuredImageUrl = `/placeholder-user.jpg`;
+          // Save uploaded file in /public/uploads
+          const bytes = await value.arrayBuffer();
+          const buffer = Buffer.from(bytes);
+
+          const uploadsDir = path.join(process.cwd(), "public", "uploads");
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+          }
+
+          // Unique filename
+          const filename = `${Date.now()}-${value.name}`;
+          const filePath = path.join(uploadsDir, filename);
+          await fs.promises.writeFile(filePath, buffer);
+
+          featuredImageUrl = `/uploads/${filename}`;
         } else {
           body[key] = value;
         }
@@ -83,7 +106,7 @@ export async function POST(request: Request) {
       metaTitle: body.metaTitle?.trim() || "",
       metaDescription: body.metaDescription?.trim() || "",
       country: body.country?.trim() || "",
-      featuredImageUrl,
+      featuredImageUrl: body.featuredImageUrl || featuredImageUrl || "",
       publishedAt: body.publishedAt ? new Date(body.publishedAt) : now,
       createdAt: now,
       updatedAt: now,
@@ -97,6 +120,9 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Error creating blog:", error);
-    return NextResponse.json({ error: "Failed to create blog" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create blog" },
+      { status: 500 }
+    );
   }
 }

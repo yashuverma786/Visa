@@ -74,10 +74,15 @@ export default async function BlogsPage() {
               {/* IMAGE */}
               <div className="relative h-56 overflow-hidden">
                 <img
-                  src={blog.featuredImageUrl || "/placeholder.svg"}
+                  src={
+                    blog.featuredImage
+                      ? `${process.env.NEXT_PUBLIC_DOMAIN}${blog.featuredImage}`
+                      : "/placeholder.svg"
+                  }
                   alt={blog.title}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
+
                 <div className="absolute inset-0 bg-gradient-to-t from-blue-800/40 to-transparent"></div>
               </div>
 

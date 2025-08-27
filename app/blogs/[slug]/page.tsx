@@ -29,12 +29,17 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     <div className="bg-white text-gray-800">
       {/* Hero Section */}
       <div className="relative w-full h-60 md:h-80">
-        <Image
-          src={blog.featuredImage || "/placeholder.svg"}
-          alt={blog.title}
-          fill
-          className="object-cover"
-        />
+       <img
+  src={
+    blog.featuredImage
+      ? `${process.env.NEXT_PUBLIC_DOMAIN}${blog.featuredImage}`
+      : "/placeholder.svg"
+  }
+  alt={blog.title}
+  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+/>
+
+
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center px-4">
           <h1 className="text-2xl md:text-4xl font-bold text-white text-center">
             {blog.title}

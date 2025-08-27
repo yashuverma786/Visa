@@ -17,11 +17,11 @@ export default function CKEditor4Wrapper({ content, setContent }: Props) {
           if ((window as any).CKEDITOR && !(window as any).CKEDITOR.instances.editor1) {
             (window as any).CKEDITOR!.replace("editor1", {
               height: 400,
-              extraPlugins: "colorbutton,font,justify",
+              extraPlugins: "colorbutton,font,justify,format", // 👈 format plugin add kar
               removePlugins: "elementspath",
               resize_enabled: true,
               toolbar: [
-                ["Format"], // 👈 Heading, Paragraph, H1–H6
+                ["Format"], // ye ab headings dropdown dikhayega
                 ["Bold", "Italic", "Underline", "Strike"],
                 ["NumberedList", "BulletedList"],
                 ["Link", "Unlink"],
@@ -30,8 +30,10 @@ export default function CKEditor4Wrapper({ content, setContent }: Props) {
                 ["Font", "FontSize"],
                 ["Source", "Maximize"],
               ],
-
+              format_tags: "p;h1;h2;h3;h4;h5;h6;pre", // 👈 ab dropdown me ye options honge
             });
+
+
 
             const ckeditor = (window as any).CKEDITOR;
             ckeditor.instances.editor1.setData(content);

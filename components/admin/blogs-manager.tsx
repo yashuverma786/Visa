@@ -104,75 +104,81 @@ export default function BlogsManager() {
     setBlogs(data);
   };
 
-  const handleEditSubmit = async () => {
-    if (!editBlog) return;
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("slug", slug);
-    formData.append("excerpt", excerpt);
-    if (editFeaturedImage) formData.append("featuredImage", editFeaturedImage);
-    formData.append("country", selectedCountry);
-    formData.append("content", content);
-    formData.append("metaTitle", metaTitle);
-    formData.append("metaDescription", metaDescription);
-    const res = await fetch(`/api/admin/blogs/${editBlog._id}`, {
-      method: "PUT",
-      body: formData,
+  // ✏️ Add Blog
+// ✏️ Add Blog
+const handleNewBlog = () => {
+  setEditBlog(null);
+  setTitle("");
+  setSlug("");
+  setExcerpt("");
+  setSelectedCountry("");
+  setContent("");
+  setMetaTitle("");
+  setMetaDescription("");
+  setFeaturedImage(null);
+  setEditFeaturedImage(null);
+  setIsOpen(true); // open new blog modal
+};
+
+const handleSubmit = async () => {
+  const formData = new FormData();
+  formData.append("title", title);
+  formData.append("slug", slug);
+  formData.append("excerpt", excerpt);
+  if (featuredImage) formData.append("featuredImage", featuredImage);
+  formData.append("country", selectedCountry);
+  formData.append("content", content);
+  formData.append("metaTitle", metaTitle);
+  formData.append("metaDescription", metaDescription);
+
+  const res = await fetch("/api/admin/blogs", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (res.ok) {
+    await fetchBlogs();
+    toast({
+      title: "Success",
+      description: `Blog created successfully`,
     });
-    if (res.ok) {
-      await fetchBlogs();
-      const handleSubmit = async () => {
-        const formData = new FormData();
-        formData.append("title", title);
-        formData.append("slug", slug);
-        formData.append("excerpt", excerpt);
-        if (featuredImage) formData.append("featuredImage", featuredImage);
-        formData.append("country", selectedCountry);
-        formData.append("content", content);
-        formData.append("metaTitle", metaTitle);
-        formData.append("metaDescription", metaDescription);
-        const res = await fetch("/api/admin/blogs", {
-          method: "POST",
-          body: formData,
-        });
+    setIsOpen(false);
+  } else {
+    alert("Error saving blog ❌");
+  }
+};
 
-        if (res.ok) {
-          const savedBlog = await res.json();
-          await fetchBlogs(); // Refetch all blogs from the server
-          toast({
-            title: "Success",
-            description: `Blog created successfully`,
-          });
-          setIsOpen(false);
-        } else {
-          alert("Error saving blog ❌");
-        }
-      };
-      formData.append("title", title);
-      formData.append("slug", slug);
-      formData.append("excerpt", excerpt);
-      if (featuredImage) formData.append("featuredImage", featuredImage);
-      formData.append("country", selectedCountry);
-      formData.append("content", content);
-      formData.append("metaTitle", metaTitle);
-      formData.append("metaDescription", metaDescription);
-      const res = await fetch("/api/admin/blogs", {
-        method: "POST",
-        body: formData,
-      });
 
-      if (res.ok) {
-        const savedBlog = await res.json();
-        await fetchBlogs(); // Refetch all blogs from the server
-        toast({
-          title: "Success",
-          description: `Blog created successfully`,
-        });
-        setIsOpen(false);
-      } else {
-        alert("Error saving blog ❌");
-      }
-    };
+// ✏️ Edit Blog
+const handleEditSubmit = async () => {
+  if (!editBlog) return;
+  const formData = new FormData();
+  formData.append("title", title);
+  formData.append("slug", slug);
+  formData.append("excerpt", excerpt);
+  if (editFeaturedImage) formData.append("featuredImage", editFeaturedImage);
+  formData.append("country", selectedCountry);
+  formData.append("content", content);
+  formData.append("metaTitle", metaTitle);
+  formData.append("metaDescription", metaDescription);
+
+  const res = await fetch(`/api/admin/blogs/${editBlog._id}`, {
+    method: "PUT",
+    body: formData,
+  });
+
+  if (res.ok) {
+    await fetchBlogs();
+    toast({
+      title: "Updated",
+      description: `Blog updated successfully`,
+    });
+    setIsEditOpen(false);
+  } else {
+    alert("Error updating blog ❌");
+  }
+};
+
 
     useEffect(() => {
       async function fetchBlogs() {
@@ -186,11 +192,12 @@ export default function BlogsManager() {
     return (
       <div>
         <button
-          onClick={() => setIsOpen(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
-        >
-          ✍️ New Blog
-        </button>
+  onClick={handleNewBlog}
+  className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
+>
+  ✍️ New Blog
+</button>
+
 
         {isOpen && (
           <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
@@ -297,7 +304,7 @@ export default function BlogsManager() {
                 <button
                   onClick={handleSubmit}
                   className="px-4 py-2 rounded bg-blue-600 text-white shadow hover:bg-blue-700"
-                >
+                > 
                   Save Blog
                 </button>
               </div>
@@ -388,4 +395,4 @@ export default function BlogsManager() {
       </div>
     );
   }
-}
+
