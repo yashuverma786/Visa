@@ -13,6 +13,11 @@ export async function GET() {
       .sort({ createdAt: -1 })
       .toArray();
 
+
+
+
+      
+
     // Convert _id to string for frontend compatibility
     const processedBlogs = blogs.map((blog) => ({
       ...blog,
