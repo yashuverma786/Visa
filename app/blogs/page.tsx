@@ -75,8 +75,8 @@ export default async function BlogsPage() {
               <div className="relative h-56 overflow-hidden">
                 <img
                   src={
-                    blog.featuredImage
-                      ? `${process.env.NEXT_PUBLIC_DOMAIN}${blog.featuredImage}`
+                    blog.featuredImageUrl
+                      ? `${process.env.NEXT_PUBLIC_DOMAIN}${blog.featuredImageUrl}`
                       : "/placeholder.svg"
                   }
                   alt={blog.title}

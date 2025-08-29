@@ -6,23 +6,15 @@ import Link from "next/link"
 import { useEffect, useState, useCallback } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
-const countries = [
-  { slug: "china", name: "China", image: "/china.jpg" },
-  { slug: "usa", name: "USA", image: "/usa.jpg" },
-  { slug: "australia", name: "Australia", image: "/australia.jpg" },
-  { slug: "egypt", name: "Egypt", image: "/Egypt.jpg" },
-  { slug: "germany", name: "Germany", image: "/Germany.jpg" },
-  { slug: "japan", name: "Japan", image: "/japan.jpg" },
-  { slug: "oman", name: "Oman", image: "/Oman.jpg" },
-  { slug: "qatar", name: "Qatar", image: "/Qatar.jpg" },
-  { slug: "spain", name: "Spain", image: "/spain flag.jpg" },
-  { slug: "nigeria", name: "Nigeria", image: "/Nigeria.jpg" },
-  { slug: "saudi-arabia", name: "Saudi Arabia", image: "/Saudi Arabia.jpg" },
-  { slug: "vietnam", name: "Vietnam", image: "/Vietnam.jpg" },
-  { slug: "canada", name: "Canada", image: "/Canada.jpg" },
-]
+interface Country {
+  slug: string
+  name: string
+  image: string
+}
 
 export default function HeroCountrySlider() {
+  const [countries, setCountries] = useState<Country[]>([])
+
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { loop: true, align: "start" },
     [Autoplay({ delay: 3000 })]
@@ -46,6 +38,20 @@ export default function HeroCountrySlider() {
     emblaApi.on("select", onSelect)
   }, [emblaApi, onSelect])
 
+  // 👇 API call to get countries (dynamic from blogs backend)
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const res = await fetch("/api/countries")
+        const data = await res.json()
+        setCountries(data)
+      } catch (error) {
+        console.error("Failed to load countries", error)
+      }
+    }
+    fetchCountries()
+  }, [])
+
   return (
     <div className="mb-12">
       <div className="text-center mb-8">
@@ -61,33 +67,41 @@ export default function HeroCountrySlider() {
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex">
             {countries.map((c) => (
-              <div
-                key={c.slug}
-                className="flex-[0_0_25%] sm:flex-[0_0_20%] md:flex-[0_0_12%] px-3"
-              >
-                <Link
-                  href={`/blogs/${c.slug}`}
-                  className="group relative flex flex-col items-center"
-                >
-                  <div
-                    className="
-                      country-circle relative w-24 h-24 rounded-full overflow-hidden
-                      transition-all duration-500 group-hover:scale-110
-                    "
-                  >
-                    <img
-                      src={c.image}
-                      alt={c.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-500"></div>
-                    <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-center px-1">
-                      {c.name}
-                    </span>
-                  </div>
-                </Link>
-              </div>
-            ))}
+  <div
+    key={c.slug}
+    className="flex-[0_0_25%] sm:flex-[0_0_20%] md:flex-[0_0_12%] px-3"
+  >
+    <Link
+      href={`/countries/${c.slug}`}  // ✅ Ab country page pe le jaayega
+      className="group relative flex flex-col items-center"
+    >
+      <div
+        className="
+          country-circle relative w-24 h-24 rounded-full overflow-hidden
+          transition-all duration-500 group-hover:scale-110
+        "
+      >
+        {/* ✅ Image API se aayegi */}
+        <img
+  src={
+    c.image
+      ? `${process.env.NEXT_PUBLIC_DOMAIN}${c.image}`
+      : "/placeholder.svg" // fallback agar image na ho
+  }
+  alt={c.name}
+  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+/>
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-500"></div>
+        <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-center px-1">
+          {c.name}
+        </span>
+      </div>
+    </Link>
+  </div>
+))}
+
+
+
           </div>
         </div>
 

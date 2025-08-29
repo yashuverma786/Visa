@@ -9,7 +9,7 @@ interface Blog {
   slug: string
   content: string
   excerpt?: string
-  featuredImage?: string
+  featuredImageUrl?: string
   category?: string
   tags?: string[]
   publishedAt?: string
@@ -28,17 +28,16 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
   return (
     <div className="bg-white text-gray-800">
       {/* Hero Section */}
-      <div className="relative w-full h-60 md:h-80">
-       <img
-  src={
-    blog.featuredImage
-      ? `${process.env.NEXT_PUBLIC_DOMAIN}${blog.featuredImage}`
-      : "/placeholder.svg"
-  }
-  alt={blog.title}
-  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-/>
-
+  <div className="relative w-full">
+  <img
+    src={
+      blog.featuredImageUrl
+        ? `${process.env.NEXT_PUBLIC_DOMAIN}${blog.featuredImageUrl}`
+        : "/placeholder.svg"
+    }
+    alt={blog.title}
+    className="w-full h-99 object-contain transition-transform duration-500 group-hover:scale-105"
+  />
 
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center px-4">
           <h1 className="text-2xl md:text-4xl font-bold text-white text-center">
