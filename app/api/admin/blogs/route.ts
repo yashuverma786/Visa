@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import fs from "fs";
-import path from "path";
+import { put } from "@vercel/blob";
 
 // ======================= GET =======================
 export async function GET() {
@@ -13,12 +12,6 @@ export async function GET() {
       .sort({ createdAt: -1 })
       .toArray();
 
-
-
-
-      
-
-    // Convert _id to string for frontend compatibility
     const processedBlogs = blogs.map((blog) => ({
       ...blog,
       _id: blog._id.toString(),
@@ -38,41 +31,20 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { db } = await connectToDatabase();
+    const formData = await request.formData();
     let body: any = {};
     let featuredImageUrl = "";
 
-    const contentType = request.headers.get("content-type") || "";
-
-    if (contentType.includes("multipart/form-data")) {
-      // Parse FormData
-      const formData = await request.formData();
-
-      for (const [key, value] of formData.entries()) {
-        if (key === "featuredImage" && value instanceof File && value.size > 0) {
-          // Save uploaded file in /public/uploads
-          const bytes = await value.arrayBuffer();
-          const buffer = Buffer.from(bytes);
-
-          const uploadsDir = path.join(process.cwd(), "public", "uploads");
-          if (!fs.existsSync(uploadsDir)) {
-            fs.mkdirSync(uploadsDir, { recursive: true });
-          }
-
-          // Unique filename
-          const filename = `${Date.now()}-${value.name}`;
-          const filePath = path.join(uploadsDir, filename);
-          await fs.promises.writeFile(filePath, buffer);
-
-          featuredImageUrl = `/uploads/${filename}`;
-        } else {
-          body[key] = value;
-        }
+    for (const [key, value] of formData.entries()) {
+      if (key === "featuredImage" && value instanceof File && value.size > 0) {
+        const filename = `${Date.now()}-${value.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+        const blob = await put(filename, value, { access: "public" });
+        featuredImageUrl = blob.url;
+      } else {
+        body[key] = value;
       }
-    } else {
-      body = await request.json();
     }
 
-    // Validate required fields
     if (!body.title || !body.content) {
       return NextResponse.json(
         { error: "Missing required fields: title, content" },
@@ -80,7 +52,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate slug from title if not provided
     const slug =
       body.slug ||
       body.title
@@ -90,7 +61,6 @@ export async function POST(request: Request) {
         .replace(/-+/g, "-")
         .trim();
 
-    // Check if slug already exists
     const existingBlog = await db.collection("blogs").findOne({ slug });
     if (existingBlog) {
       return NextResponse.json(
@@ -111,7 +81,7 @@ export async function POST(request: Request) {
       metaTitle: body.metaTitle?.trim() || "",
       metaDescription: body.metaDescription?.trim() || "",
       country: body.country?.trim() || "",
-      featuredImageUrl: body.featuredImageUrl || featuredImageUrl || "",
+      featuredImageUrl,
       publishedAt: body.publishedAt ? new Date(body.publishedAt) : now,
       createdAt: now,
       updatedAt: now,

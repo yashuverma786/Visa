@@ -12,11 +12,12 @@ function CKEditor4Wrapper({
   content: string;
   setContent: (v: string) => void;
 }) {
+  const editorId = "editor-" + Math.random().toString(36).substring(2, 9);
+
   useEffect(() => {
     const loadCk = async () => {
       if (!(window as any).CKEDITOR) {
         const script = document.createElement("script");
-        script.id = "ckeditor-script";
         script.src = "https://cdn.ckeditor.com/4.22.1/full-all/ckeditor.js";
         script.onload = () => initEditor();
         document.body.appendChild(script);
@@ -27,8 +28,8 @@ function CKEditor4Wrapper({
 
     const initEditor = () => {
       const ck = (window as any).CKEDITOR;
-      if (!ck.instances.editor1) {
-        ck.replace("editor1", {
+      if (!ck.instances[editorId]) {
+        ck.replace(editorId, {
           height: 400,
           extraPlugins: "colorbutton,font,justify",
           removePlugins: "elementspath",
@@ -44,9 +45,9 @@ function CKEditor4Wrapper({
           ],
         });
 
-        ck.instances.editor1.setData(content);
+        ck.instances[editorId].setData(content);
 
-        ck.instances.editor1.on("change", function (this: any) {
+        ck.instances[editorId].on("change", function (this: any) {
           setContent(this.getData());
         });
       }
@@ -54,17 +55,17 @@ function CKEditor4Wrapper({
 
     loadCk();
 
-    // ✅ cleanup on unmount
     return () => {
       const ck = (window as any).CKEDITOR;
-      if (ck?.instances?.editor1) {
-        ck.instances.editor1.destroy(true);
+      if (ck?.instances?.[editorId]) {
+        ck.instances[editorId].destroy(true);
       }
     };
-  }, []);
+  }, [editorId]);
 
-  return <textarea id="editor1" defaultValue={content}></textarea>;
+  return <textarea id={editorId} defaultValue={content}></textarea>;
 }
+
 
 // ---------------------------------------------------
 
@@ -180,25 +181,25 @@ export default function BlogsManager() {
   };
 
 
- useEffect(() => {
-  const fetchAll = async () => {
-    try {
-      // ✅ Fetch Blogs
-      const blogsRes = await fetch("/api/admin/blogs")
-      const blogsData = await blogsRes.json()
-      setBlogs(blogsData)
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        // ✅ Fetch Blogs
+        const blogsRes = await fetch("/api/admin/blogs")
+        const blogsData = await blogsRes.json()
+        setBlogs(blogsData)
 
-      // ✅ Fetch Countries
-      const countriesRes = await fetch("/api/countries")
-      const countriesData = await countriesRes.json()
-      setCountries(countriesData)
-    } catch (error) {
-      console.error("Error fetching blogs/countries:", error)
+        // ✅ Fetch Countries
+        const countriesRes = await fetch("/api/countries")
+        const countriesData = await countriesRes.json()
+        setCountries(countriesData)
+      } catch (error) {
+        console.error("Error fetching blogs/countries:", error)
+      }
     }
-  }
 
-  fetchAll()
-}, [])
+    fetchAll()
+  }, [])
 
 
   return (
@@ -280,13 +281,12 @@ export default function BlogsManager() {
 
             {/* Content Editor */}
             <div className="mt-6">
-              <label className="block text-sm font-medium mb-2">
-                Blog Content
-              </label>
+              <label className="block text-sm font-medium mb-2">Blog Content</label>
               <div className="border rounded-lg min-h-[300px]">
-                <CKEditor4Wrapper content={content} setContent={setContent} />
+                <CKEditor4Wrapper key={editBlog?._id || "new"} content={content} setContent={setContent} />
               </div>
             </div>
+
 
             {/* Meta Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">

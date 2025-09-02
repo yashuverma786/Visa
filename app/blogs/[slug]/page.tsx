@@ -28,7 +28,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
   return (
     <div className="bg-white text-gray-800">
       {/* Hero Section */}
-  <div className="relative w-full">
+ <div className="relative w-full h-60 md:h-80">
   <img
     src={
       blog.featuredImageUrl
@@ -36,15 +36,14 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
         : "/placeholder.svg"
     }
     alt={blog.title}
-    className="w-full h-99 object-contain transition-transform duration-500 group-hover:scale-105"
+    className="w-full h-full object-cover"
   />
-
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center px-4">
-          <h1 className="text-2xl md:text-4xl font-bold text-white text-center">
-            {blog.title}
-          </h1>
-        </div>
-      </div>
+  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+    <h1 className="text-2xl md:text-4xl font-bold text-white text-center px-4">
+      {blog.title}
+    </h1>
+  </div>
+</div>
 
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-4 text-sm text-gray-500">
