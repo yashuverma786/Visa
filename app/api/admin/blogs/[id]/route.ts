@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
-import fs from "fs";
-import path from "path";
+import { put } from "@vercel/blob";
 
 export async function PUT(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await context.params; // ✅ await params
+    const { id } = await context.params;
     const { db } = await connectToDatabase();
 
     if (!ObjectId.isValid(id)) {
@@ -17,41 +16,32 @@ export async function PUT(
     }
 
     const objectId = new ObjectId(id);
+    const formData = await req.formData();
 
-    const contentType = req.headers.get("content-type") || "";
     let body: any = {};
     let featuredImageUrl = "";
 
-    if (contentType.includes("multipart/form-data")) {
-      const formData = await req.formData();
-
-      for (const [key, value] of formData.entries()) {
-        if (key === "featuredImage" && value instanceof File && value.size > 0) {
-          const bytes = await value.arrayBuffer();
-          const buffer = Buffer.from(bytes);
-
-          const uploadsDir = path.join(process.cwd(), "public", "uploads");
-          if (!fs.existsSync(uploadsDir)) {
-            fs.mkdirSync(uploadsDir, { recursive: true });
-          }
-
-          const filename = `${Date.now()}-${value.name}`;
-          const filePath = path.join(uploadsDir, filename);
-          await fs.promises.writeFile(filePath, buffer);
-
-          featuredImageUrl = `/uploads/${filename}`;
-        } else {
-          body[key] = value;
-        }
+    for (const [key, value] of formData.entries()) {
+      if (key === "featuredImage" && value instanceof File && value.size > 0) {
+        const filename = `${Date.now()}-${value.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+        const blob = await put(filename, value, { access: "public" });
+        featuredImageUrl = blob.url;
+      } else {
+        body[key] = value;
       }
-    } else {
-      body = await req.json();
     }
 
     const now = new Date();
     const updateData: any = {
       title: body.title?.trim(),
-      slug: body.slug,
+      slug:
+        body.slug ||
+        body.title
+          ?.toLowerCase()
+          .replace(/[^a-z0-9 -]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-")
+          .trim(),
       excerpt: body.excerpt?.trim() || "",
       content: body.content?.trim(),
       country: body.country?.trim() || "",
@@ -60,6 +50,7 @@ export async function PUT(
       updatedAt: now,
     };
 
+    // agar nayi image aayi hai to update karo
     if (featuredImageUrl) {
       updateData.featuredImageUrl = featuredImageUrl;
     }
