@@ -64,6 +64,10 @@ export const metadata: Metadata = {
   },
   generator: "v0.dev",
 }
+
+
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
 export default function RootLayout({
   children,
 }: {
